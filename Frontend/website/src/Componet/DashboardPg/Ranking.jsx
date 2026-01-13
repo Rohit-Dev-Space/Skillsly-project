@@ -13,7 +13,6 @@ const rankingData = [
 ];
 
 const Ranking = () => {
-  // Helper to render rank icons or numbers
   const renderRankBadge = (rank) => {
     if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500 fill-yellow-500/20" />;
     if (rank === 2) return <Trophy className="w-5 h-5 text-gray-400 fill-gray-400/20" />;
@@ -32,8 +31,8 @@ const Ranking = () => {
       {/* Ranking List */}
       <div className="flex flex-col gap-3">
         {rankingData.map((user) => (
-          <div 
-            key={user.id} 
+          <div
+            key={user.id}
             className="flex items-center justify-between bg-[#111111] hover:bg-[#161616] border border-white/5 p-3 rounded-xl transition-all duration-200 group"
           >
             {/* Left side: Avatar and Name */}

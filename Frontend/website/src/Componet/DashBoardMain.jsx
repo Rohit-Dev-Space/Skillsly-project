@@ -39,7 +39,7 @@ import Sidebar from "./DashboardPg/SideBarMenu";
 const DashboardMain = () => {
   return (
     <div className="flex h-screen bg-black font-sans">
-      <div className="w-1/4 min-w-[250px] max-w-xs hidden lg:block border-r border-[#1a1a1a]">
+      <div className="w-2/4 min-w-[250px] max-w-xs hidden lg:block border-r border-[#1a1a1a]">
         <Sidebar />
       </div>
 

@@ -1,53 +1,169 @@
-import React from 'react';
-import { Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { BellRing, Search, X, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const skillRecommendations = [
-  { title: "Python Language", id: "python", iconBg: "bg-blue-600", iconUrl: "https://placehold.co/60x60/1E40AF/ffffff?text=P" },
-  { title: "Figma Basics", id: "figma", iconBg: "bg-fuchsia-600", iconUrl: "https://placehold.co/60x60/9D174D/ffffff?text=F" },
-  { title: "Guitar Lessons", id: "guitar", iconBg: "bg-lime-500", iconUrl: "https://placehold.co/60x60/84CC16/000000?text=G" },
-];
+import { useContext } from 'react';
+import { UserContext } from '../Context/UserContext'
+import Modal from '../../Utilities/Modal';
+import axiosinstance from '../../Utilities/axiosIntance';
 
 const SearchSkills = () => {
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [skillCategories, setSkillCategories] = useState([]);
+  const [skillSearch, setSkillSearch] = useState('');
 
-  const handleSkillClick = (category) => {
-    // Navigating to the absolute path ensures it hits the Ranking route
-    navigate(`/dashboard/ranking/${category}`);
-  
+  const handleGetSkillCategories = async (e) => {
+    // e.preventDefault();
+    const response = await axiosinstance.get('http://localhost:5000/skills/GetSkillCategories');
+    if (!response) {
+      console.error("Error fetching user data:", error);
+    } else {
+      setSkillCategories(response.data.data);
+      console.log(skillCategories);
+    }
+  }
 
+  const skillRecommendations = [{
+    title: "JavaScript",
+    id: "javascript",
+    iconBg: "#F7DF1E",
+    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/javascript.svg"
+  },
+  {
+    title: "Node.js",
+    id: "nodejs",
+    iconBg: "#3C873A",
+    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/nodedotjs.svg"
+  },
+  {
+    title: "React",
+    id: "react",
+    iconBg: "#61DAFB",
+    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/react.svg"
+  }]
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour >= 5 && hour < 12) return "Good Morning";
+    if (hour >= 12 && hour < 17) return "Good Afternoon";
+    if (hour >= 17 && hour < 23) return "Good Evening";
   };
 
+  const searching = (e) => {
+    setSkillSearch(e.target.value)
+    document.getElementById('skillcategories').scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const handleSkillClick = (category) => {
+    navigate(`/dashboard/ranking/${category}`);
+  };
+
+  const { user } = useContext(UserContext);
+
+  const userCaps = user?.name.charAt(0).toUpperCase() + user?.name.slice(1);
+
+  useEffect(() => {
+    handleGetSkillCategories();
+  }, [])
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      if (!skillSearch.trim()) {
+        setSkillCategories([]);
+        return;
+      }
+
+      try {
+        const res = await axiosinstance.get(
+          `http://localhost:5000/skills/searchSkill?q=${skillSearch}`
+        );
+        setSkillCategories(res.data.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchSkills();
+
+    if (!skillSearch) {
+      handleGetSkillCategories();
+    }
+  }, [skillSearch])
+
   return (
-    <div className="p-6 md:p-10 w-full h-full bg-[#0a0a0a]">
-      <div className="flex justify-between items-center mb-10">
-        <div className="relative w-full max-w-lg">
-          <input 
-            type="text" 
-            placeholder="Search Skill category ..." 
-            className="w-full bg-black border border-gray-700 text-white py-3 pl-5 pr-12 rounded-full outline-none focus:border-teal-500" 
-          />
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+    <div className="p-6 md:p-15 md:px-20 w-full h-full bg-[#0a0a0a]">
+      <div className=" fixed w-full max-w-lg z-40">
+        <input
+          type="text"
+          placeholder="Search Skill category ..."
+          className="w-full bg-black border border-gray-700 text-white py-3 pl-5 pr-12 rounded-full outline-none focus:border-teal-500"
+          value={skillSearch}
+          onChange={searching}
+        />
+        {skillSearch && <X onClick={() => setSkillSearch('')} className='absolute right-16 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 hover:text-red-400 cursor-pointer' />}
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 hover:text-teal-500 cursor-pointer" />
+      </div>
+      <div className="flex justify-end items-center mb-10">
+        <button className='border border-white rounded-xl text-white p-3 cursor-pointer' onClick={() => setIsOpen(true)}><BellRing /></button>
+      </div>
+      <div className='flex flex-col gap-7'>
+        <div className='flex flex-col'>
+          <h1 className="text-3xl md:text-5xl font-light text-white mb-3">{getGreeting()},</h1>
+          <p className='text-white font-light text-4xl -mt-2'>{userCaps} !</p>
         </div>
+        <p className="w-2/4 font-poppins font-light text-gray-300 text-lg">Welcome to our website! Search for skills you want to learn and help others to skill up.</p>
+        <h2 className="text-xl md:text-3xl font-medium text-teal-200 mb-6">Top Recommendation</h2>
       </div>
 
-      <h1 className="text-3xl md:text-5xl font-light text-white mb-3">Good Morning!</h1>
-      <h2 className="text-xl md:text-2xl font-medium text-teal-400 mb-6">Top Recommendation</h2>
-      
-      <div className="flex flex-wrap gap-8">
+      <div className="flex flex-wrap gap-8 z-10">
         {skillRecommendations.map((skill) => (
-          <div 
+          <div
             key={skill.id}
             onClick={() => handleSkillClick(skill.id)}
             className="flex flex-col items-center text-center p-3 cursor-pointer group transition-all"
           >
-            <div className={`w-20 h-20 rounded-2xl mb-3 flex items-center justify-center p-3 ${skill.iconBg} shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
-              <img src={skill.iconUrl} alt={skill.title} className="w-full h-full object-contain" />
+            <div className={`w-fit min-w-52 h-fit min-h-42 max-w-42 bg-slate-200 rounded-2xl mb-3 flex flex-col items-center justify-center p-3 shadow-lg group-hover:scale-105 group-hover:translate-y-2 transition-transform duration-300`}>
+              <div>
+
+              </div>
+              <img src={skill.iconUrl} alt={skill.title} className={`w-full min-w-[184px] min-h-[184px] h-full object-contain rounded-2xl`} style={{ backgroundColor: skill.iconBg }} />
+              <p className="text-sm text-center font-medium text-black group-hover:text-teal-700 mt-2">{skill.title}</p>
             </div>
-            <p className="text-sm font-medium text-white group-hover:text-teal-400">{skill.title}</p>
           </div>
         ))}
       </div>
+      <h2 className="text-xl md:text-3xl font-medium text-teal-200 mb-6" id='skillcategories'>{skillSearch ? <p className='w-full flex gap-2 items-center'>Search Results <Search size={35} className='text-teal-200' /></p> : "Skill Categories"}</h2>
+      <div className='flex flex-wrap gap-8 mt-10 z-10'>
+        {skillCategories && (
+          skillCategories.map((category) => (
+            <div
+              key={category._id}
+              onClick={() => handleSkillClick(category.title)}
+              className="flex flex-col items-center text-center p-3 cursor-pointer group transition-all"
+            >
+              <div className="w-fit min-w-52 min-h-42 bg-slate-200 rounded-2xl mb-3 flex flex-col items-center justify-center p-3 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <img
+                  src={category.iconUrl}
+                  alt={category.title}
+                  className="w-[184px] h-[184px] object-contain rounded-2xl"
+                  style={{ backgroundColor: category.iconBg }}
+                />
+                <p className="text-sm font-medium text-black group-hover:text-teal-700 mt-2">
+                  {category.title}
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+
+        {skillCategories.length <= 0 && (
+          <div className='w-full h-full mx-auto py-10'>
+            <h1 className='text-white'>No skill Categories found</h1>
+          </div>
+        )}
+      </div>
+      {isOpen && <Modal isOpen={isOpen} title='Notifications' data={user?.notifications ? user.notifications : "Notifications Coming Soon!"} isClose={() => setIsOpen(false)} className='absolute w-full h-full' />}
     </div>
   );
 };
