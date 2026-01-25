@@ -1,16 +1,17 @@
+import { UserContext } from "../Componet/Context/UserContext";
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 
-export default function ProtextedRoute({ children }) {
+const ProtectedRoute = ({ children }) => {
 
-    const user = localStorage.getItem('user');
-    const isAuthenticated = JSON.parse(user);
+    const { user, loading } = useContext(UserContext)
+    if (loading) return null;
 
-    if (!isAuthenticated?.canPass) {
-        return <Navigate to="/dashboard" />;
+    if (!user || user.role !== "admin") {
+        return <Navigate to="/" replace />;
     }
-    return (
-        <>
-            {children}
-        </>
-    )
+
+    return children;
 }
+
+export default ProtectedRoute;

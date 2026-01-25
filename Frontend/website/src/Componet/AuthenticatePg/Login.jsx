@@ -5,11 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import axiosinstance from "../../Utilities/axiosIntance";
 import { UserContext } from "../Context/UserContext";
 import { GoogleLogin } from "@react-oauth/google";
+import Loader from "../../Utilities/Loader";
+
 export default function Login({ page, setPage }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { updateUser } = useContext(UserContext);
+    const [isLoader, setIsLoader] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -30,7 +33,14 @@ export default function Login({ page, setPage }) {
             if (token) {
                 localStorage.setItem('token', response.data.token)
                 updateUser(response.data.user)
-                navigate('/dashboard')
+                setIsLoader(true);
+                if (response.data.user.role === 'admin') {
+                    setIsLoader(false)
+                    navigate('/Admin')
+                } else {
+                    setIsLoader(false)
+                    navigate('/dashboard')
+                }
             } else {
                 setError(response.data.message)
             }
@@ -57,11 +67,12 @@ export default function Login({ page, setPage }) {
                         <Inputs type="password" value={password} onChange={(e) => { setPassword(e.target.value) }} placeholder="ex: @12345 " />
                     </div>
                     {error && <p className="text-red-500 text-sm">{error}</p>}
-                    <button type="submit" className="bg-[#5B9944] hover:bg-[#B8FB70] hover:text-black font-medium to-orange-500 rounded-xl px-10 cursor-pointer text-white text-lg p-2 w-full mt-5" >Log In</button>
+                    <button type="submit" className="bg-[#5B9944] hover:bg-[#B8FB70] hover:text-black font-medium to-orange-500 rounded-xl px-10 cursor-pointer text-white text-lg p-2 w-full mt-5">Log In</button>
                     <div className="w-full h-auto flex flex-col justify-center mt-1">
                         <GoogleLogin
                             text="continue_with"
                             theme="filled_blue"
+
                             onSuccess={async (credentialResponse) => {
                                 try {
                                     const res = await axiosinstance.post(
@@ -71,7 +82,12 @@ export default function Login({ page, setPage }) {
 
                                     localStorage.setItem("token", res.data.token);
                                     updateUser(res.data.user);
-                                    navigate("/dashboard");
+                                    const role = res.data.user.role;
+                                    if (role === 'admin') {
+                                        navigate('/admin');
+                                    } else {
+                                        navigate('/dashboard');
+                                    }
                                 } catch (err) {
                                     setError(err.response?.data?.message || "Google login failed");
                                 }
@@ -84,6 +100,7 @@ export default function Login({ page, setPage }) {
                     <p className="text-sm">Don't have an account? <span className="text-[#5B9944] underline cursor-pointer" onClick={() => setPage('signup')}>Sign Up</span></p>
                 </form>
             </div>
+            {isLoader && <Loader />}
         </div>
 
     )

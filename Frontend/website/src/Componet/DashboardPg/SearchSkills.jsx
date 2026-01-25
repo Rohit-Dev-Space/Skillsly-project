@@ -10,37 +10,17 @@ const SearchSkills = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [skillCategories, setSkillCategories] = useState([]);
+  const [reccomendedSkills, setReccomendedSkills] = useState([]);
   const [skillSearch, setSkillSearch] = useState('');
 
-  const handleGetSkillCategories = async (e) => {
-    // e.preventDefault();
+  const handleGetSkillCategories = async () => {
     const response = await axiosinstance.get('http://localhost:5000/skills/GetSkillCategories');
     if (!response) {
       console.error("Error fetching user data:", error);
     } else {
       setSkillCategories(response.data.data);
-      console.log(skillCategories);
     }
   }
-
-  const skillRecommendations = [{
-    title: "JavaScript",
-    id: "javascript",
-    iconBg: "#F7DF1E",
-    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/javascript.svg"
-  },
-  {
-    title: "Node.js",
-    id: "nodejs",
-    iconBg: "#3C873A",
-    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/nodedotjs.svg"
-  },
-  {
-    title: "React",
-    id: "react",
-    iconBg: "#61DAFB",
-    iconUrl: "https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/react.svg"
-  }]
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -56,16 +36,40 @@ const SearchSkills = () => {
   }
 
   const handleSkillClick = (category) => {
-    navigate(`/dashboard/ranking/${category}`);
+    console.log(category.title)
+    const slug = category.title
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+    navigate(`/dashboard/ranking/${slug}`);
   };
 
   const { user } = useContext(UserContext);
 
   const userCaps = user?.name.charAt(0).toUpperCase() + user?.name.slice(1);
+  const topFourSkills = (user?.skillsWantToKnow ?? []).slice(0, 4);
+
+  const handleGetRecommendedSkill = async () => {
+    console.log("Sending skills:", topFourSkills);
+    const response = await axiosinstance.post('http://localhost:5000/skills/getReccomendedSkills', {
+      skills: topFourSkills
+    });
+    if (!response) {
+      console.error("Error fetching user data:", error);
+    } else {
+      console.log(response.data.data)
+      setReccomendedSkills(response.data.data);
+    }
+  }
+
+  useEffect(() => {
+    if (topFourSkills.length > 0) {
+      handleGetRecommendedSkill();
+    }
+  }, [user])
 
   useEffect(() => {
     handleGetSkillCategories();
-  }, [])
+  }, []);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -117,29 +121,33 @@ const SearchSkills = () => {
       </div>
 
       <div className="flex flex-wrap gap-8 z-10">
-        {skillRecommendations.map((skill) => (
+        {reccomendedSkills.map((skill) => (
           <div
-            key={skill.id}
-            onClick={() => handleSkillClick(skill.id)}
+            key={skill._id}
+            onClick={() => handleSkillClick(skill)}
             className="flex flex-col items-center text-center p-3 cursor-pointer group transition-all"
           >
             <div className={`w-fit min-w-52 h-fit min-h-42 max-w-42 bg-slate-200 rounded-2xl mb-3 flex flex-col items-center justify-center p-3 shadow-lg group-hover:scale-105 group-hover:translate-y-2 transition-transform duration-300`}>
               <div>
 
               </div>
-              <img src={skill.iconUrl} alt={skill.title} className={`w-full min-w-[184px] min-h-[184px] h-full object-contain rounded-2xl`} style={{ backgroundColor: skill.iconBg }} />
-              <p className="text-sm text-center font-medium text-black group-hover:text-teal-700 mt-2">{skill.title}</p>
+              <img
+                src={skill.iconUrl}
+                alt={skill.title}
+                className="w-full min-w-[184px] min-h-[184px] h-full object-contain rounded-2xl"
+                style={{ backgroundColor: skill.iconBg }}
+              />              <p className="text-sm text-center font-medium text-black group-hover:text-teal-700 mt-2">{skill.title}</p>
             </div>
           </div>
         ))}
       </div>
-      <h2 className="text-xl md:text-3xl font-medium text-teal-200 mb-6" id='skillcategories'>{skillSearch ? <p className='w-full flex gap-2 items-center'>Search Results <Search size={35} className='text-teal-200' /></p> : "Skill Categories"}</h2>
-      <div className='flex flex-wrap gap-8 mt-10 z-10'>
+      <h2 className="text-xl md:text-3xl bg-[#0a0a0a] font-medium text-teal-200 mb-6" id='skillcategories'>{skillSearch ? <p className='w-full flex gap-2 items-center'>Search Results <Search size={35} className='text-teal-200' /></p> : "Skill Categories"}</h2>
+      <div className='flex flex-wrap bg-[#0a0a0a] gap-5 mt-10 z-10'>
         {skillCategories && (
           skillCategories.map((category) => (
             <div
               key={category._id}
-              onClick={() => handleSkillClick(category.title)}
+              onClick={() => handleSkillClick(category)}
               className="flex flex-col items-center text-center p-3 cursor-pointer group transition-all"
             >
               <div className="w-fit min-w-52 min-h-42 bg-slate-200 rounded-2xl mb-3 flex flex-col items-center justify-center p-3 shadow-lg group-hover:scale-105 transition-transform duration-300">
@@ -163,7 +171,7 @@ const SearchSkills = () => {
           </div>
         )}
       </div>
-      {isOpen && <Modal isOpen={isOpen} title='Notifications' data={user?.notifications ? user.notifications : "Notifications Coming Soon!"} isClose={() => setIsOpen(false)} className='absolute w-full h-full' />}
+      {isOpen && <Modal isOpen={isOpen} type={'notification'} title='Notifications' data={user?.notifications ? user.notifications : "Notifications Coming Soon!"} isClose={() => setIsOpen(false)} className='' />}
     </div>
   );
 };

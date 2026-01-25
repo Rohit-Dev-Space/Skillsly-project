@@ -1,6 +1,7 @@
 import React, { useState, Children, useRef, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import Loader from '../Utilities/Loader';
 
 export default function Stepper({
   children,
@@ -26,6 +27,7 @@ export default function Stepper({
   const totalSteps = stepsArray.length;
   const isCompleted = currentStep > totalSteps;
   const isLastStep = currentStep === totalSteps;
+  const [isLoader, setIsLoader] = useState(false)
   const navigate = useNavigate()
 
   const updateStep = newStep => {
@@ -50,6 +52,7 @@ export default function Stepper({
 
   const handleComplete = (e) => {
     setDirection(1);
+    setIsLoader(true)
     updateStep(totalSteps + 1);
     if (onComplete) {
       onComplete(e)
@@ -127,6 +130,7 @@ export default function Stepper({
           </div>
         )}
       </div>
+      {isLoader && <Loader />}
     </div>
   );
 }
