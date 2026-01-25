@@ -31,6 +31,7 @@ const RegisterUserInitial = async (req, res) => {
             email,
             password: hashedPassword,
             profileImageUrl,
+            lastActive: Date.now()
         })
 
         const token = assignJWT(newUser._id);
@@ -70,6 +71,8 @@ const LoginUser = async (req, res) => {
         const { email, password } = req.body;
 
         const userExisting = await User.findOne({ email: email })
+        userExisting.lastActive = new Date.now();
+        await userExisting.save();
 
         if (userExisting) {
             const isMatch = await bcrypt.compare(password, userExisting.password)

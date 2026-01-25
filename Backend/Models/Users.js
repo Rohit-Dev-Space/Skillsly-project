@@ -14,16 +14,36 @@ const Schema = new mongoose.Schema({
         default: null
     },
     profileImageUrl: { type: String, default: null },
-    workImageUrl: { type: [String], default: null },
+    workImageUrl: { type: [String], default: [] },
     bio: { type: String, default: '' },
     skillsKnow: { type: [String], default: [] },
     skillsWantToKnow: { type: [String], default: [] },
     socialLink: { type: String, default: '' },
     languages: { type: [String], default: [] },
-    rating: { type: Number, default: 0 },
-    reviewsCount: { type: Number, default: 0 },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    lastActive: { type: Date, default: null },
+    reports: [
+        {
+            reason: {
+                type: String,
+                enum: [
+                    "sexual_harassment",
+                    "theft",
+                    "impersonation",
+                    "vulgar_language",
+                    "spam",
+                    "other"
+                ]
+            },
+            count: { type: Number, default: 1 }
+        }
+    ],
+    reportedCount: { type: Number, default: 0 },
+    isBlocked: { type: Boolean, default: false },
+    blockedAt: { type: Date, default: null },
+    BlockCount: { type: Number, default: 0 }
 }, { timestamps: true }
 );
 
