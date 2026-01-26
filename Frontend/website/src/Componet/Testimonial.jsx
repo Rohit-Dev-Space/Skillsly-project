@@ -10,49 +10,50 @@ export default function Testimonial() {
 
     const Testis = [
         {
-            img: "/p2.png",
+            img: "/p5.png",
             words: "Skillsly is the ultimate resource for career growth. The personalized paths helped me gain the exact skills needed for my next promotion!",
             designation: "Software Engineer",
         },
         {
-            img: "/p1.png",
+            img: "/p6.png",
             words: "I love the community focus on Skillsly. It's more than just a platform—it's a supportive place to exchange expertise and master new topics.",
             designation: "Student",
         },
         {
-            img: "/",
+            img: "/p7.png",
             words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
+            designation: "Driver",
+        },
+        {
+            img: "/p8.png",
+            words: "Finally, a platform that prioritizes application over theory. Skillsly is the ultimate tool for efficient learning.",
+            designation: "Police",
+
+        },
+        {
+            img: "/p1.png",
+            words: "Skillsly excels at deconstructing intricate concepts into intuitive, manageable insights. It is, without question, the most streamlined methodology for bridging the gap between theoretical understanding and practical execution.",
+            designation: "Engineer",
+        },
+        {
+            img: "/p5.png",
+            words: " The architecture of Skillsly’s content eliminates the friction usually found in high-level learning. It provides a high-velocity path to mastery, ensuring that complex ideas are not just learned, but fully integrated and ready for application",
             designation: "Professor",
         },
         {
-            img: "/p4.png",
-            words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
+            img: "/p6.png",
+            words: "By distilling complex subjects into a logical flow, Skillsly transforms the learning experience. It is a powerful catalyst for anyone looking to bypass the fluff and gain a deep, functional command of new expertise.",
+            designation: "doctor",
         },
         {
-            img: "/",
+            img: "/p7.png",
             words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
+            designation: "Nurse",
         },
         {
-            img: "/",
-            words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
-        },
-        {
-            img: "/",
-            words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
-        },
-        {
-            img: "/",
-            words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
-        },
-        {
-            img: "",
-            words: "The structured content on Skillsly makes complex subjects so easy to grasp. It's the most efficient way to truly understand and apply new knowledge.",
-            designation: "Professor",
+            img: "/p8.png",
+            words: "The brilliance of Skillsly lies in its ability to simplify the profound. It strips away the noise from dense subjects, providing a high-impact roadmap that empowers learners to master and deploy new skills with absolute confidence.",
+            designation: "Teacher"    ,
         },
     ];
 
