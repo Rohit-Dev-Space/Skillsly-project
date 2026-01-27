@@ -14,7 +14,7 @@ const adminRoutes = require('./Routes/AdminRoutes');
 app.use(
     cors({
         origin: '*',
-        methods: ['GET', 'PUT', 'DELETE', 'POST'],
+        methods: ['GET', 'PUT', 'DELETE', 'POST', 'PATCH'],
         allowedHeaders: ["Content-Type", "Authorization"]
     })
 )

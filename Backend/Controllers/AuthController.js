@@ -71,12 +71,12 @@ const LoginUser = async (req, res) => {
         const { email, password } = req.body;
 
         const userExisting = await User.findOne({ email: email })
-        userExisting.lastActive = new Date.now();
-        await userExisting.save();
 
         if (userExisting) {
             const isMatch = await bcrypt.compare(password, userExisting.password)
             if (isMatch) {
+                userExisting.lastActive = Date.now();
+                await userExisting.save();
                 const token = assignJWT(userExisting._id);
                 res.status(200).json({ user: userExisting, token });
             } else {
