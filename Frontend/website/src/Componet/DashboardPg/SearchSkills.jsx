@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { BellRing, Search, X, } from 'lucide-react';
+import { BellRing, Dot, RefreshCcw, Search, X, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { UserContext } from '../Context/UserContext'
 import Modal from '../../Utilities/Modal';
 import axiosinstance from '../../Utilities/axiosIntance';
+import AnimatedList from '../../components/AnimatedList';
 
 const SearchSkills = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const SearchSkills = () => {
   const [skillCategories, setSkillCategories] = useState([]);
   const [reccomendedSkills, setReccomendedSkills] = useState([]);
   const [skillSearch, setSkillSearch] = useState('');
+  const [notification, setNotification] = useState([])
 
   const handleGetSkillCategories = async () => {
     const response = await axiosinstance.get('http://localhost:5000/skills/GetSkillCategories');
@@ -19,6 +21,38 @@ const SearchSkills = () => {
       console.error("Error fetching user data:", error);
     } else {
       setSkillCategories(response.data.data);
+    }
+  }
+
+  const handleGetNotifications = async () => {
+    const response = await axiosinstance.get('/skills/get-Notifications')
+    if (response) {
+      setNotification(response.data.data)
+    }
+  }
+
+  const handledeleteNotification = async (id) => {
+    const response = await axiosinstance.post('/skills/delete-Notifications', { id: id })
+
+    setNotification(prev =>
+      prev.filter(notification => notification._id !== id)
+    );
+  }
+
+  const handleNotificationOpen = async () => {
+    setIsOpen(true);
+
+    const hasUnread = notification.some(n => !n.isRead);
+    if (!hasUnread) return;
+
+    try {
+      await axiosinstance.patch('/skills/mark-notifications');
+
+      setNotification(prev =>
+        prev.map(n => ({ ...n, isRead: true }))
+      );
+    } catch (err) {
+      console.error(err);
     }
   }
 
@@ -49,14 +83,12 @@ const SearchSkills = () => {
   const topFourSkills = (user?.skillsWantToKnow ?? []).slice(0, 4);
 
   const handleGetRecommendedSkill = async () => {
-    console.log("Sending skills:", topFourSkills);
     const response = await axiosinstance.post('http://localhost:5000/skills/getReccomendedSkills', {
       skills: topFourSkills
     });
     if (!response) {
       console.error("Error fetching user data:", error);
     } else {
-      console.log(response.data.data)
       setReccomendedSkills(response.data.data);
     }
   }
@@ -69,6 +101,7 @@ const SearchSkills = () => {
 
   useEffect(() => {
     handleGetSkillCategories();
+    handleGetNotifications();
   }, []);
 
   useEffect(() => {
@@ -95,6 +128,8 @@ const SearchSkills = () => {
     }
   }, [skillSearch])
 
+  const hasUnread = notification.some(n => !n.isRead);
+
   return (
     <div className="p-6 md:p-15 md:px-20 w-full h-full bg-[#0a0a0a]">
       <div className=" fixed w-full max-w-lg z-40">
@@ -108,9 +143,13 @@ const SearchSkills = () => {
         {skillSearch && <X onClick={() => setSkillSearch('')} className='absolute right-16 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 hover:text-red-400 cursor-pointer' />}
         <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 hover:text-teal-500 cursor-pointer" />
       </div>
-      <div className="flex justify-end items-center mb-10">
-        <button className='border border-white rounded-xl text-white p-3 cursor-pointer' onClick={() => setIsOpen(true)}><BellRing /></button>
+
+      <div className=" flex justify-end items-center mb-10">
+        <button className='relative border border-white rounded-xl text-white p-3 cursor-pointer' onClick={handleNotificationOpen}><BellRing />
+          {hasUnread && <Dot size={80} color='#FFF' className='font-extrabold absolute -top-9 -right-9' />}
+        </button>
       </div>
+
       <div className='flex flex-col gap-7'>
         <div className='flex flex-col'>
           <h1 className="text-3xl md:text-5xl font-light text-white mb-3">{getGreeting()},</h1>
@@ -136,7 +175,8 @@ const SearchSkills = () => {
                 alt={skill.title}
                 className="w-full min-w-[184px] min-h-[184px] h-full object-contain rounded-2xl"
                 style={{ backgroundColor: skill.iconBg }}
-              />              <p className="text-sm text-center font-medium text-black group-hover:text-teal-700 mt-2">{skill.title}</p>
+              />
+              <p className="text-sm text-center font-medium text-black group-hover:text-teal-700 mt-2">{skill.title}</p>
             </div>
           </div>
         ))}
@@ -171,7 +211,22 @@ const SearchSkills = () => {
           </div>
         )}
       </div>
-      {isOpen && <Modal isOpen={isOpen} type={'notification'} title='Notifications' data={user?.notifications ? user.notifications : "Notifications Coming Soon!"} isClose={() => setIsOpen(false)} className='' />}
+      {isOpen &&
+        <Modal isOpen={isOpen} type={'notification'} title='Notifications' isClose={() => setIsOpen(false)} className='' >
+          <div className='w-full h-fit'>
+            {notification.length !== 0 ?
+              <AnimatedList
+                items={notification}
+                func={handledeleteNotification}
+                onItemSelect={(item, index) => console.log(item, index)}
+                showGradients
+                enableArrowNavigation
+                displayScrollbar
+              /> : (
+                <p className='text-center text-xl text-gray-500 mt-20 flex flex-col items-center'>No Notifications In The Inbox! <br />Refresh to confirm<RefreshCcw /></p>
+              )}
+          </div>
+        </Modal>}
     </div>
   );
 };

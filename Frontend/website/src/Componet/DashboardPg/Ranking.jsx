@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { UserPlus, MessageSquare, Trophy } from 'lucide-react';
+import React, { useContext, useEffect, useState } from 'react';
+import { UserPlus, MessageSquare, Trophy, UserCheck2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import axiosinstance from '../../Utilities/axiosIntance';
 import { UserRound } from 'lucide-react';
 import Modal from '../../Utilities/Modal';
 import Profile from './Profile';
+import { UserContext } from '../Context/UserContext';
 
 
 const Ranking = () => {
@@ -19,8 +20,21 @@ const Ranking = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [profileUserName, setProfileUserName] = useState('');
   const [userData, setUserData] = useState(null);
+  const [alreadyRequested, setAlreadyRequested] = useState(false)
+  const [RequestedId, setRequestedId] = useState([])
+  const { user } = useContext(UserContext);
+
   let { category } = useParams();
   category = category.replace(/[-/]/g, ' ').replace(/\b\w/g, char => char.toUpperCase())
+
+  const handleSendNotification = async (id) => {
+    const response = await axiosinstance.post('/skills/send-Notifications', { reciverId: id, title: `sent Request To Learn ${category}`, type: "Friend_Request" })
+    if (response.data.isSent) {
+      setAlreadyRequested(true)
+    } else {
+      setRequestedId(prev => [...prev, id])
+    }
+  }
 
   useEffect(() => {
     const handleGetRankings = async (e) => {
@@ -58,23 +72,23 @@ const Ranking = () => {
 
       {/* Ranking List */}
       <div className="flex flex-col gap-3 cursor-pointer">
-        {rankingData.map((user, index) => (
+        {rankingData.map((info, index) => (
           <div
             key={index}
             className="flex items-center justify-between bg-[#111111] hover:bg-[#161616] border border-white/5 p-3 rounded-xl transition-all duration-200 group"
-            onClick={() => handleOpenProfile(user)}
+            onClick={() => handleOpenProfile(info)}
           >
             {/* Left side: Avatar and Name */}
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-gray-400 flex-shrink-0">
-                {user.profileImageUrl ? (
-                  <img src={user.profileImageUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                {info.profileImageUrl ? (
+                  <img src={info.profileImageUrl} alt={info.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
                   <div className="w-full h-full rounded-full bg-zinc-700 border border-white/10" ><UserRound /></div>
                 )}
               </div>
               <span className="text-gray-200 font-medium group-hover:text-white transition-colors">
-                {user.userName}
+                {info.userName}
               </span>
             </div>
 
@@ -86,19 +100,31 @@ const Ranking = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-6">
-                <button className="text-gray-400 hover:text-teal-400 transition-colors">
-                  <UserPlus className="w-5 h-5" />
-                </button>
-                <button className="text-gray-400 hover:text-teal-400 transition-colors">
-                  <MessageSquare className="w-5 h-5" />
-                </button>
-              </div>
+              {user?._id === info._id ?
+                <div>
+                  <p className='w-fit text-gray-400'>This is You!</p>
+                </div>
+                :
+                < div className="flex items-center gap-6">
+                  <button onClick={(e) => {
+                    e.stopPropagation();
+                    handleSendNotification(info._id);
+                  }}
+                    disabled={RequestedId.includes(info._id) ? true : false}
+                    className="text-gray-400 cursor-pointer hover:text-teal-400 transition-colors">
+                    {RequestedId.includes(info._id) ? <UserCheck2 className='w-6 h-6' /> : <UserPlus className="w-6 h-6" />}
+                  </button>
+                  <button className="text-gray-400 cursor-pointer hover:text-teal-400 transition-colors">
+                    <MessageSquare className="w-5 h-5" />
+                  </button>
+                </div>
+              }
             </div>
           </div>
         ))}
       </div>
-      {isOpen && userData &&
+      {
+        isOpen && userData &&
         <Modal
           title={`${profileUserName}'s Profile`}
           isClose={handleSetClose}
@@ -106,8 +132,9 @@ const Ranking = () => {
           type='profile'
         >
           <Profile userData={userData} />
-        </Modal>}
-    </div>
+        </Modal>
+      }
+    </div >
   );
 };
 
