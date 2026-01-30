@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/UserContext";
 import axiosinstance from "../../Utilities/axiosIntance";
 import { uploadWorkImages } from "../Inputs/UploadToSupabase";
+import Loader from "../../Utilities/Loader";
 
 export default function SignUpInfo() {
 
@@ -21,6 +22,7 @@ export default function SignUpInfo() {
     const [languageKnown, setLanguageKnown] = useState([])
     const [error, setError] = useState([]);
     const { user, updateUser } = useContext(UserContext);
+    const [isLoader, setIsLoader] = useState(false)
     const navigate = useNavigate();
 
     const toggleSkill = (skill) => {
@@ -227,7 +229,7 @@ export default function SignUpInfo() {
                 </Stepper>
             </form>
             <img src="/parnesh2.png" alt="person loging in" className="w-2/6 h-dvh" />
-
+            {isLoader && <Loader />}
         </div>
     )
 }

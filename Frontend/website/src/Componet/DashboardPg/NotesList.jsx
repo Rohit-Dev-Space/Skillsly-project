@@ -1,55 +1,59 @@
-import React, { useState } from "react";
-
-const initialNotes = [
-  {
-    id: 1,
-    title: "Note 1",
-    date: "11/09/2025",
-    content:
-      "Create a short cinematic video using CapCut, applying transitions and filters.",
-  },
-  {
-    id: 2,
-    title: "Note 2",
-    date: "16/09/2025",
-    content:
-      "Compile clips from a recent trip using CapCut's auto-caption and speed ramping.",
-  },
-  {
-    id: 3,
-    title: "Note 3",
-    date: "28/09/2025",
-    content:
-      "Use CapCut to showcase a dramatic makeover or room renovation with split-screen effects.",
-  },
-];
+import axiosinstance from "../../Utilities/axiosIntance";
+import React, { useEffect, useState } from "react";
+import moment from "moment";
+import Modal from "../../Utilities/Modal";
 
 const NotesList = () => {
-  const [notes, setNotes] = useState(initialNotes);
+  const [fetchedNotes, setFetchedNotes] = useState([])
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({ title: "", content: "" });
+  const [selectedNote, setSelectedNote] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleFetchNotes = async (e) => {
+    // e.preventDefault();
+    const response = await axiosinstance.get('http://localhost:5000/Notes/fetch-Notes')
+    if (response.data) {
+      setFetchedNotes(response.data)
+    } else {
+      console.log('Error Fetching notes')
+    }
+  }
+
+  const handleEditNote = async (note) => {
+    const response = await axiosinstance.put('http://localhost:5000/Notes/edit-Note', { id: note._id, title: editData.title, content: editData.content })
+    if (response) {
+      handleFetchNotes();
+      setEditingId(null)
+    } else {
+      console.log('Something went wrong in editing')
+    }
+  }
+
+  useEffect(() => {
+    handleFetchNotes()
+  }, [])
 
   // DELETE
-  const handleDelete = (id) => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const handleDeleteNote = async (note) => {
+    const response = await axiosinstance.delete(`http://localhost:5000/Notes/delete-Notes/${note._id}`);
+    if (!response) {
+      console.log('Something went wrong in deleting Note');
+    } else {
+      setIsOpen(false);
+      handleFetchNotes();
+    }
   };
+
+  const handleDeleteNoteModal = (note) => {
+    setIsOpen(true);
+    setSelectedNote(note);
+  }
 
   // EDIT START
   const handleEdit = (note) => {
-    setEditingId(note.id);
+    setEditingId(note._id);
     setEditData({ title: note.title, content: note.content });
-  };
-
-  // SAVE EDIT
-  const handleSave = (id) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id
-          ? { ...note, title: editData.title, content: editData.content }
-          : note
-      )
-    );
-    setEditingId(null);
   };
 
   return (
@@ -58,13 +62,13 @@ const NotesList = () => {
         All Saved Notes
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {notes.map((note) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 border gap-4">
+        {fetchedNotes.map((note, index) => (
           <div
-            key={note.id}
-            className="bg-black p-5 rounded-xl shadow-lg border border-[#1a1a1a] h-52 flex flex-col justify-between"
+            key={index}
+            className="bg-black p-5 rounded-xl shadow-lg border border-white/25 h-52 flex flex-col justify-between"
           >
-            {editingId === note.id ? (
+            {editingId === note._id ? (
               <>
                 {/* EDIT MODE */}
                 <input
@@ -92,8 +96,8 @@ const NotesList = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => handleSave(note.id)}
-                    className="px-3 py-1 text-sm rounded bg-teal-600 text-white"
+                    onClick={() => handleEditNote(note)}
+                    className="px-3 py-1 text-sm rounded bg-teal-600 text-white cursor-pointer"
                   >
                     Save
                   </button>
@@ -107,7 +111,7 @@ const NotesList = () => {
                     <span className="text-white text-lg font-medium">
                       {note.title}
                     </span>
-                    <span className="text-gray-400 text-sm">{note.date}</span>
+                    <span className="text-gray-400 text-sm">{moment(note.createdAt).format("DD MMM, YYYY")}</span>
                   </div>
 
                   <p className="text-gray-300 text-sm line-clamp-3">
@@ -118,13 +122,13 @@ const NotesList = () => {
                 <div className="flex justify-end gap-2 mt-4">
                   <button
                     onClick={() => handleEdit(note)}
-                    className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-500"
+                    className="px-3 py-1 text-sm rounded bg-blue-600 text-white hover:bg-blue-500 cursor-pointer"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(note.id)}
-                    className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-500"
+                    onClick={() => handleDeleteNoteModal(note)}
+                    className="px-3 py-1 text-sm rounded bg-red-600 text-white hover:bg-red-500 cursor-pointer"
                   >
                     Delete
                   </button>
@@ -134,7 +138,19 @@ const NotesList = () => {
           </div>
         ))}
       </div>
-    </div>
+      {isOpen && selectedNote && (
+        <Modal
+          title="Delete Note"
+          isClose={() => setIsOpen(false)}
+          className={'absolute w-full h-full'}
+        >
+          <div className="text-center w-full h-fit p-5 mx-3">{`Are you sure you want to delete "${selectedNote.title}"?`}</div>
+          <div className="w-full h-fit flex items-center justify-center gap-5">
+            <button onClick={() => setIsOpen(false)} className="w-fit h-fit px-7 cursor-pointer py-3 bg-white text-black rounded-xl">Cancel</button>
+            <button onClick={() => handleDeleteNote(selectedNote)} className="w-fit h-fit px-7 cursor-pointer py-3 bg-red-400 text-white rounded-xl">Delete</button>
+          </div>
+        </Modal>
+      )}    </div>
   );
 };
 

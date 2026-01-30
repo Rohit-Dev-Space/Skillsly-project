@@ -1,47 +1,29 @@
-// import React from 'react';
-// import { Routes, Route, Navigate } from 'react-router-dom';
-
-// import Sidebar from './DashboardPg/SideBarMenu';
-// import UserProfile from './DashboardPg/Profile';
-// import SearchSkills from './DashboardPg/SearchSkills';
-// import GroupsList from './DashboardPg/GroupsList';
-// import NotesList from './DashboardPg/NotesList';
-// import MessagesList from './DashboardPg/MessagesList';
-
-// const GroupSection = () => {
-//   return (
-//     <div className="flex h-screen bg-black font-sans">
-//       <div className="w-1/4 min-w-[250px] max-w-xs hidden lg:block border-r border-[#1a1a1a]">
-//         <Sidebar />
-//       </div>
-
-//       <main className="flex-grow overflow-y-auto">
-//         <Routes>
-//           <Route index element={<UserProfile />} />
-
-//           <Route path="search" element={<SearchSkills />} />
-//           <Route path="groups" element={<GroupsList />} />
-//           <Route path="notes" element={<NotesList />} />
-//           <Route path="messages" element={<MessagesList />} />
-
-//           <Route path="*" element={<Navigate to="/dashboard" />} />
-//         </Routes>
-//       </main>
-//     </div>
-//   );
-// };
-
-// export default GroupSection;
-
 import { Outlet } from "react-router-dom";
 import Sidebar from "./DashboardPg/SideBarMenu";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronRightIcon } from "lucide-react";
+import { useState } from "react";
 
 const DashboardMain = () => {
+
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
+
   return (
     <div className="flex h-screen bg-black font-sans">
-      <div className="w-2/4 min-w-[250px] max-w-xs hidden lg:block border-r border-[#1a1a1a]">
-        <Sidebar />
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          animate={{ width: isSideMenuOpen ? '40%' : '7%' }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className={`relative max-w-xs hidden lg:block border-r border-[#1a1a1a]`}>
+          <Sidebar isOpen={isSideMenuOpen} />
+          <motion.div
+            onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
+            animate={{ rotate: isSideMenuOpen ? 180 : 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }} className={`absolute -right-7 cursor-pointer top-[35%] w-fit h-fit py-5 px-3 border border-white rounded-full bg-black/80 hover:border-teal-300 hover:text-teal-300`}>
+            <ChevronRightIcon size={30} className='text-white' />
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
 
       <main className="flex-grow overflow-y-auto">
         <Outlet />

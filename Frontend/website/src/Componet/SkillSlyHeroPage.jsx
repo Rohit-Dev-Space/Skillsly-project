@@ -78,7 +78,7 @@ const SkillSlyHeroPage = () => {
               SIGN UP
             </button>
             <button className="px-8 py-3 border border-gray-400 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg bg-transparent transition-colors" onClick={() => navigate('/dashboard')}>
-              Get Started
+              {user ? 'Get Started' : 'Explore Now'}
             </button>
           </div>
         </div>

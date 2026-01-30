@@ -22,7 +22,7 @@ const googleLoginOnly = async (req, res) => {
         const payload = ticket.getPayload();
         const { email, sub } = payload;
 
-        const user = await User.findOne({ email });
+        const user = await User.findOneAndUpdate({ email }, { lastActive: Date.now() });
 
         // 🚫 No auto signup
         if (!user) {

@@ -1,13 +1,3 @@
-// import GroupSection from '../src/Componet/DashBoardMain'
-// export default function Dashboard() {
-//     return (
-//         <div>
-//             <GroupSection/>
-//         </div>
-//     )
-// }
-
-
 import { Routes, Route } from "react-router-dom";
 
 import DashboardMain from "../src/Componet/DashboardMain";
@@ -23,15 +13,13 @@ export default function Dashboard() {
   return (
     <Routes>
       <Route element={<DashboardMain />}>
-        <Route index element={<UserProfile />} />
-        <Route path="search" element={<SearchSkills />} />
+        <Route path="profile" element={<UserProfile />} />
+        <Route index element={<SearchSkills />} />
         <Route path="ranking/:category" element={<Ranking />} />
         <Route path="groups" element={<GroupsList />} />
         <Route path="notes" element={<NotesList />} />
         <Route path="messages" element={<MessagesList />} />
         <Route path="session/:roomId" element={<CallJoin />} />
-
-        
         <Route path="session/:roomId" element={<CallJoin />} />
       </Route>
     </Routes>
