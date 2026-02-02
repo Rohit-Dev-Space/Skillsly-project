@@ -24,23 +24,6 @@ const Schema = new mongoose.Schema({
     pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     lastActive: { type: Date, default: null },
-    reports: [
-        {
-            reason: {
-                type: String,
-                enum: [
-                    "sexual_harassment",
-                    "theft",
-                    "impersonation",
-                    "vulgar_language",
-                    "spam",
-                    "other"
-                ]
-            },
-            count: { type: Number, default: 1 }
-        }
-    ],
-    reportedCount: { type: Number, default: 0 },
     isBlocked: { type: Boolean, default: false },
     blockedAt: { type: Date, default: null },
     BlockCount: { type: Number, default: 0 }

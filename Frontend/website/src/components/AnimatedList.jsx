@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'motion/react';
 import { Check, X } from 'lucide-react';
+import axiosinstance from '../Utilities/axiosIntance';
+import { UserContext } from '../Componet/Context/UserContext';
+import { Toaster } from 'sonner';
+import { toast } from "sonner"
 
 const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => {
   const ref = useRef(null);
@@ -102,8 +106,23 @@ const AnimatedList = ({
     setKeyboardNav(false);
   }, [selectedIndex, keyboardNav]);
 
+  const { user } = useContext(UserContext)
+
+  const handleCreateGroup = async (item) => {
+    try {
+      const response = await axiosinstance.post('/groups/create-group', { title: `${item.senderId.userName} & ${user.userName} Group`, memberOne: item.senderId._id, memberTwo: user._id, memberOneSkill: item.skillOffering, memberTwoSkill: item.category, createdBy: item.senderId._id });
+      if (response.data.group) {
+        func(item._id);
+        toast.success('Group Created Successfully!', { duration: 4000 });
+      }
+    } catch (err) {
+      console.error("Error creating group:", err);
+    }
+  }
+
   return (
     <div className={`relative w-full -mt-5 ${className}`}>
+      <Toaster position="top-right" richColors />
       <div
         ref={listRef}
         className={`max-h-[400px] overflow-y-auto p-4 ${displayScrollbar
@@ -124,16 +143,16 @@ const AnimatedList = ({
             onClick={() => handleItemClick(item, index)}>
             <div
               className={`p-4 bg-[#111] flex justify-between rounded-lg ${selectedIndex === index ? 'bg-[#222]' : ''} ${itemClassName}`}>
-              <div className='flex gap-2'>
+              <div className='flex gap-2 items-center'>
                 <div className='w-7 h-7 rounded-full object-cover'>
                   <img src={item.senderId.profileImageUrl} alt="" className='w-7 h-7 rounded-full object-cover' />
                 </div>
                 <p className="text-white font-semibold m-0">{item.senderId.userName}</p>
               </div>
-              <p className='text-sm text-gray-300'>{item.title}</p>
+              <p className='text-sm w-[30ch] text-center text-gray-300'>{item.title}</p>
               <div className='flex gap-5'>
                 <button
-                  // onClick={onAccept}
+                  onClick={() => handleCreateGroup(item)}
                   className="p-1 rounded-full cursor-pointer hover:bg-black/50 hover:text-teal-400 transition-colors"
                 >
                   <Check className="w-5 h-5" />

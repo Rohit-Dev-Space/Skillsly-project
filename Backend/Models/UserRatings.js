@@ -1,19 +1,8 @@
+const mongoose = require('mongoose');
+
 const UserRatings = new mongoose.Schema(
     {
-        sessionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Session",
-            required: true,
-            unique: true,
-        },
-
-        reviewedUserId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-
-        reviewerUserId: {
+        UserId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
@@ -25,11 +14,15 @@ const UserRatings = new mongoose.Schema(
         },
 
         rating: {
-            type: Number,
+            type: [Number],
             min: 1,
             max: 10,
             required: true,
         },
+        totalReviews: {
+            type: Number,
+            default: 0
+        }
 
     },
     { timestamps: true }

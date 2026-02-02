@@ -10,6 +10,9 @@ const authRoutes = require('./Routes/AuthRoutes');
 const skillRoutes = require('./Routes/SkillCategories');
 const NotesRoutes = require('./Routes/NotesRotes');
 const adminRoutes = require('./Routes/AdminRoutes');
+const GroupRoutes = require('./Routes/GroupRoutes');
+const GroupMessagesRoute = require('./Routes/GroupMessagesRoute');
+const ReportRoutes = require('./Routes/ReportRoute')
 
 app.use(
     cors({
@@ -26,6 +29,9 @@ app.use('/api/auth', authRoutes);
 app.use('/skills', skillRoutes);
 app.use('/Notes', NotesRoutes);
 app.use('/Admin', adminRoutes);
+app.use('/groups', GroupRoutes);
+app.use('/session-requests', GroupMessagesRoute);
+app.use('/report', ReportRoutes)
 
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
