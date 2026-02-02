@@ -19,9 +19,9 @@ export default function Dashboard() {
         <Route path="groups" element={<GroupsList />} />
         <Route path="notes" element={<NotesList />} />
         <Route path="groups/:groupName/:groupId" element={<GroupMessages />} />
-        <Route path="session/:roomId" element={<CallJoin />} />
-        <Route path="session/:roomId" element={<CallJoin />} />
+        {/* <Route path="session/:roomId" element={<CallJoin />} /> */}
       </Route>
+      <Route path="session/:roomId/:sessionToken" element={<CallJoin />} />
     </Routes>
   );
 }

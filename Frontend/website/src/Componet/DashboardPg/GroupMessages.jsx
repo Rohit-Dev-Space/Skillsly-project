@@ -15,7 +15,6 @@ const GroupMessages = () => {
   const [error, setError] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-
   const [sessionRequests, setSessionRequests] = useState([]);
   const [joinSessions, setJoinSessions] = useState([]);
 
@@ -27,7 +26,7 @@ const GroupMessages = () => {
 
   const handleJoinSession = (item) => {
     const roomId = `skill-session-${Date.now()}`;
-    navigate(`/dashboard/session/${roomId}`);
+    navigate(`/dashboard/session/${roomId}/${item.sessionToken}`);
   };
 
 
@@ -54,15 +53,23 @@ const GroupMessages = () => {
   };
 
   const handleSendSessionRequest = async () => {
+    let skillWantToLearn = "";
     if (!date || !time) {
       setError("Please fill all fields");
       return;
+    }
+    const response = await axiosinstance.get('/groups/get-one-group/' + groupId);
+    if (user?._id === response?.data.data.memberOne) {
+      skillWantToLearn = response?.data.data.memberTwoSkill;
+    } else {
+      skillWantToLearn = response?.data.data.memberOneSkill;
     }
 
     await axiosinstance.post("/session-requests/send-session-request", {
       groupId,
       date,
       time,
+      skillWantToLearn
     });
 
     setIsOpen(false);
@@ -102,6 +109,29 @@ const GroupMessages = () => {
     ...joinSessions.map((item) => ({ ...item, type: "join" })),
   ].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
+  const isJoinDisabled = (msg) => {
+    const sessionDate = new Date(msg.date);
+    const [h, m] = msg.time.split(":");
+    sessionDate.setHours(h, m, 0, 0);
+
+    const now = new Date();
+    const diffMinutes = (now - sessionDate) / 60000;
+
+    if (diffMinutes < 0) return "upcoming";
+    if (diffMinutes > 15) return "expired";
+    return "active";
+  };
+
+  useEffect(() => {
+    joinSessions.forEach((msg) => {
+      const status = isJoinDisabled(msg);
+
+      axiosinstance.put(
+        `/session-requests/update-status/${msg.sessionToken}`,
+        { status: status }
+      );
+    });
+  }, [joinSessions]);
 
   return (
     <div className="h-screen w-full flex flex-col bg-black">
@@ -163,21 +193,50 @@ const GroupMessages = () => {
               )}
 
               {/* JOIN SESSION CARD */}
-              {msg.type === "join" && (
-                <div className="w-full flex justify-center">
-                  <div className="max-w-md w-full p-4 bg-[#1a1a1a] rounded-xl">
-                    <p className="text-gray-300 text-center mb-3">
-                      Join Session
-                    </p>
-                    <button
-                      onClick={() => handleJoinSession(msg)}
-                      className="mx-auto flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white py-2 px-6 rounded-lg"
-                    >
-                      <Video size={18} /> Join
-                    </button>
+              {msg.type === "join" && (() => {
+                const status = isJoinDisabled(msg);
+
+                return (
+                  <div className="w-full flex justify-center">
+                    <div className={`${status === 'expired' ? 'w-full' : 'max-w-md '} flex justify-evenly items-center w-full p-4 bg-[#1a1a1a] rounded-xl`}>
+                      <div className="flex flex-col">
+                        <p className="text-gray-300 text-center mb-3">Join Session</p>
+                        <button
+                          disabled={status !== "active"}
+                          onClick={() => handleJoinSession(msg)}
+                          className={`mx-auto flex items-center gap-2 py-2 px-6 rounded-lg
+              ${status === "active"
+                              ? "bg-teal-600 hover:bg-teal-700 cursor-pointer"
+                              : "bg-gray-600 cursor-not-allowed"
+                            } text-white`}
+                        >
+                          <Video size={18} />
+                          {status === "upcoming" && "Not Started"}
+                          {status === "active" && "Join"}
+                          {status === "expired" && "Expired"}
+                        </button>
+
+                        <p className="text-xs text-center text-gray-400 mt-2">
+                          {status === "upcoming" && "Session not started yet"}
+                          {status === "active" && "Window open for more 15 min only"}
+                          {status === "expired" && "Session expired"}
+                        </p>
+
+                      </div>
+
+                      <div className="flex flex-col gap-5 te">
+                        <p className="text-gray-400 text-sm">
+                          created by {msg.senderId.userName}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          Scheduled at {moment(msg.date).format("DD MMM YYYY")} at {msg.time}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
+
             </div>
           );
         })}

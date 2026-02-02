@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'motion/react';
-import { Check, X } from 'lucide-react';
+import { Check, Trash, X } from 'lucide-react';
 import axiosinstance from '../Utilities/axiosIntance';
 import { UserContext } from '../Componet/Context/UserContext';
 import { Toaster } from 'sonner';
@@ -150,21 +150,32 @@ const AnimatedList = ({
                 <p className="text-white font-semibold m-0">{item.senderId.userName}</p>
               </div>
               <p className='text-sm w-[30ch] text-center text-gray-300'>{item.title}</p>
-              <div className='flex gap-5'>
-                <button
-                  onClick={() => handleCreateGroup(item)}
-                  className="p-1 rounded-full cursor-pointer hover:bg-black/50 hover:text-teal-400 transition-colors"
-                >
-                  <Check className="w-5 h-5" />
-                </button>
+              {item.type !== 'Reported' && item.type !== 'System' ?
+                <div className='flex gap-5 items-center'>
+                  <button
+                    onClick={() => handleCreateGroup(item)}
+                    className="p-1 h-fit rounded-full cursor-pointer hover:bg-black/50 hover:text-teal-400 transition-colors"
+                  >
+                    <Check className="w-5 h-5" />
+                  </button>
 
-                <button
-                  onClick={() => { func(item._id) }}
-                  className="p-1 rounded-full cursor-pointer hover:bg-black/50 hover:text-red-500 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+                  <button
+                    onClick={() => { func(item._id) }}
+                    className="p-1 h-fit rounded-full cursor-pointer hover:bg-black/50 hover:text-red-500 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                :
+                <div className='flex gap-5'>
+                  <button
+                    onClick={() => { func(item._id) }}
+                    className="p-1 rounded-full cursor-pointer hover:bg-black/50 hover:text-red-500 transition-colors"
+                  >
+                    <Trash className="w-5 h-5" />
+                  </button>
+                </div>
+              }
             </div>
           </AnimatedItem>
         ))}
