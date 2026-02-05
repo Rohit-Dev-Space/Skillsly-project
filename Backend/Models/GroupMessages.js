@@ -13,6 +13,22 @@ const Schema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
+    reviewId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "GroupMessages"
+    },
+    reviewerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    reviewedId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    rating: {
+        type: Number,
+        default: 0
+    },
     sessionToken: {
         type: String,
         unique: true,
@@ -21,7 +37,6 @@ const Schema = new mongoose.Schema({
     date: {
         type: Date,
         default: Date.now,
-        required: true
     },
     skillWantToLearn: {
         type: String,
@@ -29,15 +44,15 @@ const Schema = new mongoose.Schema({
     },
     time: {
         type: String,
-        required: true
     },
     type: {
         type: String,
-        enum: ["session_request", "session_created"],
+        enum: ["session_request", "session_created", "review"],
         required: true
     },
     status: {
         type: String,
+        enum: ["upcoming", "active", "Session Completed"],
         default: null
     },
     isRead: {

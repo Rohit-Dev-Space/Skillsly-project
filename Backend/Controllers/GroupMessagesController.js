@@ -23,10 +23,12 @@ const sendSessionRequest = async (req, res) => {
     }
 };
 
-const getSessionRequestsByGroup = async (req, res) => {
+const getMessagesByGroup = async (req, res) => {
     try {
         const groupId = req.params.groupId;
-        const GroupMessagess = await GroupMessages.find({ groupId: groupId, type: "session_request" }).populate('senderId', '_id userName profileImageUrl');
+        const GroupMessagess = await GroupMessages.find({ groupId })
+            .populate("senderId recevierId reviewerId")
+            .sort({ createdAt: 1 });
         res.status(200).json({ data: GroupMessagess });
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message })
@@ -59,32 +61,59 @@ const createJoinSession = async (req, res) => {
 
         const response = await GroupMessages.findById(sessionRequestId)
 
-        if (!response) {
-            return res.status(400).json({ message: "Session Not Found" });
-        }
+        const checkIsSession = await GroupMessages.findOne({ type: "session_created", status: { $in: ["upcoming", "active"] } })
 
-        const createSession = await GroupMessages.create({
-            groupId: groupId,
-            senderId: senderId,
-            recevierId: recevierId,
-            skillWantToLearn: response.skillWantToLearn,
-            date: date,
-            time: time,
-            type: "session_created",
-            isRead: false,
-            isReviewed: false,
-            sessionToken: sessionToken
-        })
-
-        const deleteRequest = await GroupMessages.findByIdAndDelete(sessionRequestId);
-
-        if (createSession && deleteRequest) {
-            res.status(201).json({ data: createSession });
+        if (checkIsSession) {
+            return res.status(409).json({ message: 'Cannnot create a session if already one Exists' })
         } else {
-            res.status(400).json({ message: "Failed to create session" });
+            const createSession = await GroupMessages.create({
+                groupId: groupId,
+                senderId: senderId,
+                recevierId: recevierId,
+                skillWantToLearn: response.skillWantToLearn,
+                date: date,
+                time: time,
+                type: "session_created",
+                isRead: false,
+                isReviewed: false,
+                sessionToken: sessionToken
+            })
+
+            const deleteRequest = await GroupMessages.findByIdAndDelete(sessionRequestId);
+
+            if (createSession && deleteRequest) {
+                res.status(201).json({ data: createSession });
+            } else {
+                res.status(400).json({ message: "Failed to create session" });
+            }
         }
     }
     catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+const createReviewMessage = async (req, res) => {
+    try {
+        const { groupId, sessionToken } = req.body
+        const sessionTokenGenerate = crypto.randomBytes(24).toString("hex");
+        const info = await GroupMessages.findOne({ sessionToken: sessionToken });
+        const checkIsReviewed = await GroupMessages.findOne({ reviewId: info._id, type: 'review' })
+        if (checkIsReviewed) {
+            return res.status(200).json({ message: 'Review already completed' })
+        } else {
+            const response = await GroupMessages.create({
+                groupId: groupId,
+                reviewId: info._id,
+                sessionToken: sessionTokenGenerate,
+                reviewerId: info.senderId,
+                reviewedId: info.recevierId,
+                skillWantToLearn: info.skillWantToLearn,
+                type: 'review'
+            })
+            return res.status(200).json({ message: "Review created", data: response })
+        }
+    } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message })
     }
 }
@@ -114,7 +143,7 @@ const checkIsReviewed = async (req, res) => {
 
 const sendReview = async (req, res) => {
     try {
-        const { mentorId, rating, skillWantToLearn } = req.body;
+        const { mentorId, rating, skillWantToLearn, reviewId } = req.body;
 
         const userRating = await UserRatings.findOneAndUpdate({ UserId: mentorId, skill: skillWantToLearn },
             {
@@ -124,6 +153,7 @@ const sendReview = async (req, res) => {
             { new: true, upsert: true });
 
         if (userRating) {
+            const response = await GroupMessages.findOneAndUpdate({ reviewId: reviewId }, { isReviewed: true, rating: rating })
             return res.status(200).json({ message: "You have reviewed this mentor SuccesFully" });
         } else {
             return res.status(400).json({ message: "Failed to give review" });
@@ -164,4 +194,19 @@ const updateStatus = async (req, res) => {
     }
 }
 
-module.exports = { sendSessionRequest, getSessionRequestsByGroup, deleteSessionRequest, createJoinSession, getJoinSessionsByGroup, checkIsReviewed, sendReview, verifySession, updateStatus };
+const deleteJoinSession = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const response = await GroupMessages.findOneAndDelete({ _id: id })
+        if (response) {
+            return res.status(200).json(response);
+        } else {
+            return res.status(400).json({ message: 'Could Not delete Session' });
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+module.exports = { sendSessionRequest, getMessagesByGroup, deleteSessionRequest, createJoinSession, getJoinSessionsByGroup, checkIsReviewed, sendReview, verifySession, updateStatus, createReviewMessage, deleteJoinSession };

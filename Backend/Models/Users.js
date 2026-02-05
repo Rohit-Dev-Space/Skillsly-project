@@ -26,7 +26,9 @@ const Schema = new mongoose.Schema({
     lastActive: { type: Date, default: null },
     isBlocked: { type: Boolean, default: false },
     blockedAt: { type: Date, default: null },
-    BlockCount: { type: Number, default: 0 }
+    BlockCount: { type: Number, default: 0 },
+    isOnline: { type: Boolean, default: false },
+    lastSeen: { type: Date, default: null },
 }, { timestamps: true }
 );
 
