@@ -6,6 +6,8 @@ import { UserContext } from '../Context/UserContext'
 import Modal from '../../Utilities/Modal';
 import axiosinstance from '../../Utilities/axiosIntance';
 import AnimatedList from '../../components/AnimatedList';
+import { Toaster } from 'sonner';
+import { toast } from 'sonner';
 
 const SearchSkills = () => {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ const SearchSkills = () => {
   const [reccomendedSkills, setReccomendedSkills] = useState([]);
   const [skillSearch, setSkillSearch] = useState('');
   const [notification, setNotification] = useState([])
+  const [openRequestSkill, setOpenRequestSkill] = useState(false);
+  const [requestedSkill, setRequestedSkill] = useState('');
 
   const handleGetSkillCategories = async () => {
     const response = await axiosinstance.get('http://localhost:5000/skills/GetSkillCategories');
@@ -93,6 +97,19 @@ const SearchSkills = () => {
     }
   }
 
+  const handleSendRequestSkill = async () => {
+    try {
+      const response = await axiosinstance.post('/skills/send-request-notification', { requestedSkill: requestedSkill });
+      if (response.data) {
+        setOpenRequestSkill(false);
+        setRequestedSkill('');
+        toast.success('Skill Request Sent Successfully');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     if (topFourSkills.length > 0) {
       handleGetRecommendedSkill();
@@ -102,6 +119,15 @@ const SearchSkills = () => {
   useEffect(() => {
     handleGetSkillCategories();
     handleGetNotifications();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 800);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -132,7 +158,7 @@ const SearchSkills = () => {
 
   return (
     <div className="p-6 md:p-15 md:px-20 w-full h-full bg-[#0a0a0a]">
-      <div className=" fixed w-full max-w-lg z-40">
+      <div className={`fixed w-full max-w-lg z-40`}>
         <input
           type="text"
           placeholder="Search Skill category ..."
@@ -206,14 +232,25 @@ const SearchSkills = () => {
         )}
 
         {skillCategories.length <= 0 && (
-          <div className='w-full h-full mx-auto py-10'>
-            <h1 className='text-white'>No skill Categories found</h1>
+          <div className='w-full h-full mx-auto py-10 flex flex-col items-start'>
+            <h1 className='text-white text-xl mb-6'>No skill Categories found</h1>
+            
+            <div className='flex flex-col-reverse items-start gap-4'>
+              <button onClick={() => setOpenRequestSkill(true)} className='bg-blue-400 text-white text-sm font-medium p-3 rounded-lg hover:bg-blue-200 hover:text-black cursor-pointer'>
+                Request Skill
+              </button>
+              
+              <div className='flex gap-4'>
+                <img src="/SadStep-1.png" alt="Thinking Man 1" className="w-30 h-auto object-contain" />
+                <img src="/SadStep-2.png" alt="Thinking Man 2" className="w-30 h-auto object-contain" />
+              </div>
+            </div>
           </div>
         )}
       </div>
       {isOpen &&
         <Modal isOpen={isOpen} type={'notification'} title='Notifications' isClose={() => setIsOpen(false)} className='' >
-          <div className='w-full h-fit'>
+          <div className='w-full min-w-[600px] h-fit'>
             {notification.length !== 0 ?
               <AnimatedList
                 items={notification}
@@ -227,6 +264,23 @@ const SearchSkills = () => {
               )}
           </div>
         </Modal>}
+      {openRequestSkill
+        &&
+        <Modal
+          isOpen={openRequestSkill}
+          isClose={() => setOpenRequestSkill(false)}
+          className={'absolute w-full h-full'}
+          title='Request Skill'
+        >
+          <div className='w-full min-w-[600px] h-fit mx-auto flex flex-col items-center justify-center pb-5'>
+            <input value={requestedSkill} onChange={(e) => { setRequestedSkill(e.target.value) }} type="text" placeholder='Request any Skill you want to be added' className='outline-none w-3/4 bg-black border border-gray-100 rounded-xl h-fit p-3' />
+            <div className='flex gap-5 w-3/4'>
+              <button onClick={() => { setOpenRequestSkill(false) }} className='bg-red-500 w-full text-white p-3 rounded-lg mt-4 hover:bg-red-300 hover:text-black'>Cancel</button>
+              <button onClick={handleSendRequestSkill} className='bg-blue-500 w-full text-white p-3 rounded-lg mt-4 hover:bg-blue-300 hover:text-black'>Send Request</button>
+            </div>
+          </div>
+        </Modal>
+      }
     </div>
   );
 };

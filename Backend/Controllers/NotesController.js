@@ -14,6 +14,17 @@ const getNotes = async (req, res) => {
     }
 }
 
+const createNote = async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const newNote = new Notes({ title, content, userId: req.user.id });
+        const response = await newNote.save();
+        return res.status(201).json(response);
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
 const editNotes = async (req, res) => {
     try {
         const { id, title, content } = req.body
@@ -36,8 +47,8 @@ const deleteNote = async (req, res) => {
         }
         return res.status(200).json({ message: 'Note Deleted Sucessfully' })
     } catch (err) {
-
+        res.status(500).json({ message: "Server Error", error: err.message })
     }
 }
 
-module.exports = { getNotes, editNotes, deleteNote }
+module.exports = { getNotes, editNotes, deleteNote, createNote }

@@ -2,6 +2,7 @@ const express = require('express');
 const User = require('../Models/Users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const UserRatings = require('../Models/UserRatings');
 
 const assignJWT = (userId) => {
     return jwt.sign({ id: userId }, process.env.JWT_PASS, { expiresIn: '7d' });
@@ -53,6 +54,15 @@ const RegisterUserFinal = async (req, res) => {
             languages: languages,
             workImageUrl: workImageUrl
         }, { new: true })
+
+        const findUser = await User.findOne({ email: email }).select('_id');
+
+        for (let skill of skillsKnow) {
+            const createSkillRatings = await UserRatings.create({
+                userId: findUser,
+                skill: skill
+            })
+        }
 
         if (!newUserInfo) {
             return res.status(400).json({ message: "User not found with this email" });

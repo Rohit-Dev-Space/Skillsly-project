@@ -90,7 +90,7 @@ const getReccomendedSkills = async (req, res) => {
 
 const SendNotification = async (req, res) => {
     try {
-        const { reciverId, title, type } = req.body;
+        const { reciverId, type, skillOffering, category } = req.body;
         let isSent = false;
         if (!reciverId) {
             return res.status(400).json("User does not Exist");
@@ -98,11 +98,12 @@ const SendNotification = async (req, res) => {
         const checkForSameNotification = await Notification.findOne({
             senderId: req.user._id,
             userId: reciverId,
-            title: title
+            skillOffering: skillOffering,
+            title: `sent Request To Learn ${category} in Exchange To Teach ${skillOffering}`,
         })
 
         if (checkForSameNotification) {
-            return res.status(409).json({
+            return res.status(200).json({
                 message: "Notification already sent",
                 isSent: true
             });
@@ -111,8 +112,10 @@ const SendNotification = async (req, res) => {
         const response = await Notification.create({
             userId: reciverId,
             senderId: req.user._id,
+            category: category,
+            skillOffering: skillOffering,
             type: type,
-            title: title,
+            title: `sent Request To Learn ${category} in Exchange To Teach ${skillOffering}`,
             isRead: false
         })
 
@@ -123,12 +126,29 @@ const SendNotification = async (req, res) => {
     }
 }
 
+const sendRequestNotifictaion = async (req, res) => {
+    try {
+        const { requestedSkill } = req.body;
+        const userId = req.user._id;
+
+        const response = await Notification.create({
+            userId: userId,
+            type: "User_request",
+            requestedSkill: requestedSkill,
+            title: `Requested Skill: ${requestedSkill}`,
+        })
+        return res.status(200).json({ messagae: "Notification Sent", response })
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
 const getNotifications = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        const notifications = await Notification.find({ userId })
-            .populate("senderId", "userName profileImageUrl")
+        const notifications = await Notification.find({ userId, type: { $ne: "User_request" } })
+            .populate("senderId", "userName profileImageUrl _id")
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -176,4 +196,4 @@ const markAllNotificationsRead = async (req, res) => {
 
 
 
-module.exports = { getSkillCategories, searchSkill, getRanking, getReccomendedSkills, SendNotification, getNotifications, deleteNotification, markAllNotificationsRead };
+module.exports = { getSkillCategories, searchSkill, getRanking, getReccomendedSkills, SendNotification, getNotifications, deleteNotification, markAllNotificationsRead, sendRequestNotifictaion };

@@ -5,9 +5,11 @@ import UserProfile from "../src/Componet/DashboardPg/Profile";
 import SearchSkills from "../src/Componet/DashboardPg/SearchSkills";
 import GroupsList from "../src/Componet/DashboardPg/GroupsList";
 import NotesList from "../src/Componet/DashboardPg/NotesList";
-import MessagesList from "../src/Componet/DashboardPg/MessagesList";
+import GroupMessages from "../src/Componet/DashboardPg/GroupMessages";
 import Ranking from "../src/Componet/DashboardPg/Ranking";
 import CallJoin from "../src/Componet/DashboardPg/CallJoin";
+import UserMessages from "../src/Componet/DashboardPg/UserMessages"
+import MessageList from "../src/Componet/DashboardPg/MessageList"
 
 export default function Dashboard() {
   return (
@@ -17,11 +19,12 @@ export default function Dashboard() {
         <Route index element={<SearchSkills />} />
         <Route path="ranking/:category" element={<Ranking />} />
         <Route path="groups" element={<GroupsList />} />
+        <Route path="messages" element={<MessageList />} />
         <Route path="notes" element={<NotesList />} />
-        <Route path="messages" element={<MessagesList />} />
-        <Route path="session/:roomId" element={<CallJoin />} />
-        <Route path="session/:roomId" element={<CallJoin />} />
+        <Route path="groups/:groupName/:groupId" element={<GroupMessages />} />
+        <Route path="messages/:userName/:userId" element={<UserMessages />} />
       </Route>
+      <Route path="session/:roomId/:sessionToken" element={<CallJoin />} />
     </Routes>
   );
 }
