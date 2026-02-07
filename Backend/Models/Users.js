@@ -20,7 +20,6 @@ const Schema = new mongoose.Schema({
     skillsWantToKnow: { type: [String], default: [] },
     socialLink: { type: String, default: '' },
     languages: { type: [String], default: [] },
-    friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     lastActive: { type: Date, default: null },
