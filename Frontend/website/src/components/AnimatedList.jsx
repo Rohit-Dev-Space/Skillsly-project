@@ -145,9 +145,9 @@ const AnimatedList = ({
               className={`p-4 bg-[#111] flex justify-between rounded-lg ${selectedIndex === index ? 'bg-[#222]' : ''} ${itemClassName}`}>
               <div className='flex gap-2 items-center'>
                 <div className='w-7 h-7 rounded-full object-cover'>
-                  <img src={item.senderId.profileImageUrl} alt="" className='w-7 h-7 rounded-full object-cover' />
+                  <img src={item?.senderId?.profileImageUrl || 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2K3ZQBynpgRLwZggqLm2ucbh8MuUrfLqfZo7sEZwLHA&s'} alt="" className='w-7 h-7 rounded-full object-cover' />
                 </div>
-                <p className="text-white font-semibold m-0">{item.senderId.userName}</p>
+                <p className="text-white font-semibold m-0">{item?.senderId?.userName || 'System Admin'}</p>
               </div>
               <p className='text-sm w-[30ch] text-center text-gray-300'>{item.title}</p>
               {item.type !== 'Reported' && item.type !== 'System' ?
@@ -170,7 +170,7 @@ const AnimatedList = ({
                 <div className='flex gap-5'>
                   <button
                     onClick={() => { func(item._id) }}
-                    className="p-1 rounded-full cursor-pointer hover:bg-black/50 hover:text-red-500 transition-colors"
+                    className="p-1 rounded-full h-fit cursor-pointer hover:bg-black/50 hover:text-red-500 transition-colors"
                   >
                     <Trash className="w-5 h-5" />
                   </button>

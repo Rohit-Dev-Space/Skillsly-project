@@ -1,6 +1,8 @@
 const User = require('../Models/Users');
 const Badges = require('../Models/Badges')
 const UserRatings = require('../Models/UserRatings')
+const ReportedUser = require('../Models/ReportedUser')
+const Notification = require('../Models/Notifications')
 
 const getNumberOfUser = async (req, res) => {
     try {
@@ -17,9 +19,29 @@ const getActiveUsersCount = async (req, res) => {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(now.getDate() - 7);
 
-        const response = await User.find({
+        const response = await User.countDocuments({
             lastActive: {
                 $gte: oneWeekAgo,
+                $lte: now
+            }
+        })
+
+        return res.status(200).json(response)
+
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message })
+    }
+}
+
+const newlyRegisteredNumber = async (req, res) => {
+    try {
+        const now = new Date();
+        const oneWeek = new Date();
+        oneWeek.setDate(now.getDate() - 7);
+
+        const response = await User.countDocuments({
+            createdAt: {
+                $gte: oneWeek,
                 $lte: now
             }
         })
@@ -34,7 +56,6 @@ const getActiveUsersCount = async (req, res) => {
 const newlyRegistered = async (req, res) => {
     try {
         const now = new Date();
-
         const fiveWeeksAgo = new Date();
         fiveWeeksAgo.setDate(now.getDate() - 35);
 
@@ -45,28 +66,31 @@ const newlyRegistered = async (req, res) => {
                 }
             },
             {
-                $group: {
-                    _id: {
+                $addFields: {
+                    weekIndex: {
                         $ceil: {
                             $divide: [
-                                { $subtract: [now, "$createdAt"] },
+                                { $subtract: ["$createdAt", fiveWeeksAgo] },
                                 1000 * 60 * 60 * 24 * 7
                             ]
                         }
-                    },
-                    count: { $sum: 1 }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$weekIndex",
+                    users: { $sum: 1 }
                 }
             },
             {
                 $project: {
-                    week: "$_id",
-                    count: 1,
+                    week: { $concat: ["W", { $toString: "$_id" }] },
+                    users: 1,
                     _id: 0
                 }
             },
-            {
-                $sort: { week: 1 }
-            }
+            { $sort: { week: 1 } }
         ]);
 
         return res.status(200).json(data);
@@ -76,18 +100,42 @@ const newlyRegistered = async (req, res) => {
     }
 };
 
+
 const getReportedUsers = async (req, res) => {
     try {
-        const reportedUsers = await User.find({
-            reportedCount: { $gte: 1 }
-        }).select("userName email reportedCount reports isBlocked");
+        const reportedUsers = await ReportedUser.find({ isRead: false }).populate('reportedId', 'userName profileImgUrl name BlockCount')
 
-        const count = reportedUsers.length;
+        return res.status(200).json(reportedUsers);
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+}
 
-        return res.status(200).json({
-            reportedUsers,
-            count
+const reportedReasonCount = async (req, res) => {
+    try {
+        const { id, reason } = req.body;
+        const reportedUsersCount = await ReportedUser.countDocuments({ reportedId: id, reports: reason })
+
+        return res.status(200).json(reportedUsersCount);
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+}
+
+const getReportedUsersNumber = async (req, res) => {
+    try {
+        const now = new Date();
+        const week = new Date();
+        week.setDate(now.getDate() - 7);
+
+        const reportedUsers = await ReportedUser.countDocuments({
+            reportedDateTime: {
+                $gte: now,
+                $lte: week
+            }
         });
+
+        return res.status(200).json(reportedUsers);
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
     }
@@ -163,24 +211,13 @@ const getPopularSkills = async (req, res) => {
     }
 };
 
-const getAllUser = async (req, res) => {
-    try {
-        const response = await User.find()
-            .select("name userName profileImageUrl")
-            .limit(20)
-            .sort({ createdAt: -1 });;
-        if (!response) {
-            return res.status(400).json({ message: "Could not fetch Users" });
-        }
-        return res.status(200).json(response)
-    } catch (err) {
-        return res.status(500).json({ message: "Something went wrong", error: err.message });
-    }
-}
-
 const searchUser = async (req, res) => {
     try {
         const { q } = req.query;
+
+        if (!q || q.trim() === "") {
+            return res.status(200).json([]);
+        }
 
         const response = await User.find({
             $or: [
@@ -188,7 +225,7 @@ const searchUser = async (req, res) => {
                 { email: { $regex: q, $options: 'i' } },
                 { name: { $regex: q, $options: 'i' } }
             ]
-        }).select("name userName profileImageUrl")
+        })
 
         return res.status(200).json(response)
     } catch (err) {
@@ -198,53 +235,67 @@ const searchUser = async (req, res) => {
 
 const badgeEligibleUser = async (req, res) => {
     try {
-        // Fetch all badges
         const badges = await Badges.find();
 
-        // Prepare result
         const eligibleUsers = [];
 
         for (const badge of badges) {
-            // Find ratings for this skill
+            // Only skill-based badges
+            if (!badge.skill) continue;
+
             const ratings = await UserRatings.aggregate([
                 { $match: { skill: badge.skill } },
+                { $unwind: "$rating" },
                 {
                     $group: {
-                        _id: "$reviewedUserId",
+                        _id: "$UserId",
                         avgRating: { $avg: "$rating" },
                         reviewCount: { $sum: 1 }
                     }
                 },
-                { $match: { avgRating: { $gte: 8.5 }, reviewCount: { $gte: 10 } } }
+                {
+                    $match: {
+                        avgRating: { $gte: 8.5 },
+                        reviewCount: { $gte: 10 }
+                    }
+                }
             ]);
 
+            const userIds = ratings.map(r => r._id);
+
+            const users = await User.find({ _id: { $in: userIds } })
+                .select("userName name email skillsKnow");
+
+            const userMap = new Map(users.map(u => [u._id.toString(), u]));
+
             for (const r of ratings) {
-                // Check if user is already approved or pending
                 if (
-                    !badge.approvedUsers.includes(r._id) &&
-                    !badge.pendingApproval.includes(r._id)
-                ) {
-                    const user = await User.findById(r._id).select("userName name email skillsKnow");
-                    eligibleUsers.push({
-                        badgeId: badge._id,
-                        badgeTitle: badge.title,
-                        badgeSkill: badge.skill,
-                        userId: r._id,
-                        userName: user.userName,
-                        name: user.name,
-                        avgRating: r.avgRating.toFixed(2),
-                        reviewCount: r.reviewCount
-                    });
-                }
+                    badge.approvedUsers.includes(r._id) ||
+                    badge.pendingApproval.includes(r._id)
+                ) continue;
+
+                const user = userMap.get(r._id.toString());
+                if (!user) continue;
+
+                eligibleUsers.push({
+                    badgeId: badge._id,
+                    badgeTitle: badge.title,
+                    badgeSkill: badge.skill,
+                    userId: r._id,
+                    userName: user.userName,
+                    name: user.name,
+                    avgRating: r.avgRating.toFixed(2),
+                    reviewCount: r.reviewCount
+                });
             }
         }
 
-        return res.status(200).json(eligibleUsers);
-
+        res.status(200).json(eligibleUsers);
     } catch (err) {
-        return res.status(500).json({ message: "Something went wrong", error: err.message });
+        res.status(500).json({ message: "Something went wrong", error: err.message });
     }
-}
+};
+
 
 const setBadgeForUser = async (req, res) => {
     try {
@@ -269,5 +320,24 @@ const setBadgeForUser = async (req, res) => {
         return res.status(500).json({ message: "Something went wrong", error: err.message });
     }
 }
+
+const warnUser = async (req, res) => {
+    try {
+        const { reportId, userId } = req.body;
+        const response = await ReportedUser.findByIdAndUpdate({ _id: reportId }, { isRead: true })
+        const createNotification = await Notification.create({
+            userId: userId,
+            type: "System",
+            title: `Your account has been reported multiple times for behavior that violates our community standards or else you could be temporarily Banned`
+        })
+        if (response && createNotification) {
+            return res.status(200).json(createNotification)
+        }
+    } catch (err) {
+
+    }
+}
+
+module.exports = { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, searchUser, getReportedUsers, reportedReasonCount, warnUser }
 
 

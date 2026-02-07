@@ -10,4 +10,5 @@ const BadgeSchema = new mongoose.Schema({
     pendingApproval: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true });
 
-module.exports = mongoose.model('Badges', BadgeSchema);
+const Badges = mongoose.model('Badges', BadgeSchema);
+module.exports = Badges;
