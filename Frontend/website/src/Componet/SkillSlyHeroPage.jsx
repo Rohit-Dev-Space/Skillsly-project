@@ -65,8 +65,6 @@ const SkillSlyHeroPage = () => {
             Connect with peers worldwide to share knowledge, study together, and accelerate your learning through collaborative education
           </p>
 
-          {/* Paper Airplane and Dotted Line effect */}
-          {/* Positioning adjusted to match the reference UI more closely */}
           <div className="absolute top-[20%] left-[80%] md:left-[60%] lg:left-[calc(100%-80px)] transform -translate-y-1/2 z-10 w-24 h-24">
             <img
               src={IMAGES.paperAirplane}
@@ -75,7 +73,6 @@ const SkillSlyHeroPage = () => {
             />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex space-x-4 mt-8">
             <button className="px-8 py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg" onClick={() => navigate('/authenticate')}>
               SIGN UP
