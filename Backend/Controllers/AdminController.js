@@ -2,7 +2,8 @@ const User = require('../Models/Users');
 const Badges = require('../Models/Badges')
 const UserRatings = require('../Models/UserRatings')
 const ReportedUser = require('../Models/ReportedUser')
-const Notification = require('../Models/Notifications')
+const Notification = require('../Models/Notifications');
+const SkillCategories = require('../Models/SkillCategories');
 
 const getNumberOfUser = async (req, res) => {
     try {
@@ -143,23 +144,40 @@ const getReportedUsersNumber = async (req, res) => {
 
 const BlockUser = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const { reportId, userId } = req.body;
 
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
+        const response = await ReportedUser.findByIdAndUpdate({ _id: reportId }, { isRead: true })
+
         user.isBlocked = true;
-        user.blockedAt = new Date.now();
+        user.blockedAt = new Date();
         user.BlockCount = user.BlockCount + 1;
 
         await user.save();
 
         return res.status(200).json({
             message: "User blocked for 48 hours",
-            blockedUntil: new Date(user.blockedAt.getTime() + 48 * 60 * 60 * 1000)
+            blockedUntil: new Date(user.blockedAt.getTime() + 48 * 60 * 60 * 1000),
+            response
         });
+
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+}
+
+const terminateUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        const response = await User.findByIdAndDelete({ _id: userId })
+        if (response) {
+            return res.status(200).json(response)
+        }
 
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
@@ -233,93 +251,98 @@ const searchUser = async (req, res) => {
     }
 }
 
-const badgeEligibleUser = async (req, res) => {
+const eligibleProgressiveBadgeUser = async (req, res) => {
     try {
-        const badges = await Badges.find();
-
-        const eligibleUsers = [];
-
-        for (const badge of badges) {
-            // Only skill-based badges
-            if (!badge.skill) continue;
-
-            const ratings = await UserRatings.aggregate([
-                { $match: { skill: badge.skill } },
-                { $unwind: "$rating" },
-                {
-                    $group: {
-                        _id: "$UserId",
-                        avgRating: { $avg: "$rating" },
-                        reviewCount: { $sum: 1 }
-                    }
-                },
-                {
-                    $match: {
-                        avgRating: { $gte: 8.5 },
-                        reviewCount: { $gte: 10 }
+        const eligibleUsers = await UserRatings.aggregate([
+            {
+                $addFields: {
+                    validRatings: {
+                        $filter: {
+                            input: "$rating",
+                            as: "r",
+                            cond: { $gt: ["$$r", 0] }
+                        }
                     }
                 }
-            ]);
-
-            const userIds = ratings.map(r => r._id);
-
-            const users = await User.find({ _id: { $in: userIds } })
-                .select("userName name email skillsKnow");
-
-            const userMap = new Map(users.map(u => [u._id.toString(), u]));
-
-            for (const r of ratings) {
-                if (
-                    badge.approvedUsers.includes(r._id) ||
-                    badge.pendingApproval.includes(r._id)
-                ) continue;
-
-                const user = userMap.get(r._id.toString());
-                if (!user) continue;
-
-                eligibleUsers.push({
-                    badgeId: badge._id,
-                    badgeTitle: badge.title,
-                    badgeSkill: badge.skill,
-                    userId: r._id,
-                    userName: user.userName,
-                    name: user.name,
-                    avgRating: r.avgRating.toFixed(2),
-                    reviewCount: r.reviewCount
-                });
+            },
+            {
+                $addFields: {
+                    avgRating: { $avg: "$validRatings" },
+                    reviewCount: { $size: "$validRatings" }
+                }
+            },
+            {
+                $addFields: {
+                    badge: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: {
+                                        $and: [
+                                            { $gte: ["$avgRating", 9] },
+                                            { $gte: ["$reviewCount", 15] }
+                                        ]
+                                    },
+                                    then: "Guru"
+                                },
+                                {
+                                    case: {
+                                        $and: [
+                                            { $gte: ["$avgRating", 8] },
+                                            { $gte: ["$reviewCount", 7] }
+                                        ]
+                                    },
+                                    then: "Efficiency II"
+                                },
+                                {
+                                    case: {
+                                        $and: [
+                                            { $gte: ["$avgRating", 7] },
+                                            { $gte: ["$reviewCount", 3] }
+                                        ]
+                                    },
+                                    then: "Efficiency III"
+                                }
+                            ],
+                            default: null
+                        }
+                    }
+                }
+            },
+            { $match: { badge: { $ne: null } } },
+            {
+                $lookup: {
+                    from: "users", // 🔴 VERIFY THIS NAME
+                    localField: "UserId",
+                    foreignField: "_id",
+                    as: "user"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$user",
+                    preserveNullAndEmptyArrays: false
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$user._id",
+                    userName: "$user.userName",
+                    profileImageUrl: "$user.profileImageUrl",
+                    skill: "$skill",
+                    avgRating: { $round: ["$avgRating", 2] },
+                    reviewCount: 1,
+                    badge: 1
+                }
             }
-        }
+        ]);
 
         res.status(200).json(eligibleUsers);
     } catch (err) {
-        res.status(500).json({ message: "Something went wrong", error: err.message });
+        res.status(500).json({ message: err.message });
     }
 };
-
-
-const setBadgeForUser = async (req, res) => {
-    try {
-        const { badgeId, userId } = req.body;
-
-        const badge = await Badges.findById(badgeId);
-        if (!badge) return res.status(404).json({ message: "Badge not found" });
-
-        // Avoid duplicates
-        if (!badge.approvedUsers.includes(userId)) {
-            badge.approvedUsers.push(userId);
-        }
-
-        // Remove from pendingApproval if exists
-        badge.pendingApproval = badge.pendingApproval.filter(id => id.toString() !== userId);
-
-        await badge.save();
-
-        return res.status(200).json({ message: "Badge approved for user", badge });
-
-    } catch (err) {
-        return res.status(500).json({ message: "Something went wrong", error: err.message });
-    }
-}
 
 const warnUser = async (req, res) => {
     try {
@@ -338,6 +361,109 @@ const warnUser = async (req, res) => {
     }
 }
 
-module.exports = { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, searchUser, getReportedUsers, reportedReasonCount, warnUser }
+const createBadge = async (req, res) => {
+    try {
+        const payload = req.body;
+        const { type } = payload;
 
+        if (!type) {
+            return res.status(400).json({ message: "Badge type is required" });
+        }
 
+        /* ---------- SKILL BADGE ---------- */
+        if (type === "SKILL") {
+            const { skill, description, levels } = payload;
+
+            if (!skill || !Array.isArray(levels) || levels.length === 0) {
+                return res.status(400).json({ message: "Invalid skill badge data" });
+            }
+
+            // sanitize payload
+            const cleanPayload = {
+                title: `${skill}`,
+                type,
+                skill,
+                description,
+                levels,
+                iconUrl: '',
+            };
+
+            const badge = await Badges.create(cleanPayload);
+
+            return res.status(201).json({
+                message: "Skill badge created",
+                badge
+            });
+        }
+
+        if (type === "ACHIEVEMENT") {
+            const { title, description, condition, count, iconUrl } = payload;
+
+            if (!title || !condition || !count || !iconUrl) {
+                return res.status(400).json({ message: "Invalid achievement badge data" });
+            }
+
+            const cleanPayload = {
+                title,
+                type,
+                description,
+                condition,
+                count,
+                iconUrl,
+            };
+
+            const badge = await Badges.create(cleanPayload);
+
+            return res.status(201).json({
+                message: "Achievement badge created",
+                badge
+            });
+        }
+
+        return res.status(400).json({ message: "Invalid badge type" });
+
+    } catch (err) {
+        console.error("CREATE BADGE ERROR:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+const requestedSkill = async (req, res) => {
+    try {
+        const response = await Notification.find({
+            type: 'User_request'
+        }).populate('userId', 'userName profileImgUrl');
+
+        return res.status(200).json(response);
+
+    } catch (err) {
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
+}
+
+const addSkillCategory = async (req, res) => {
+    try {
+        const { title, iconBg, iconUrl } = req.body;
+
+        const response = await SkillCategories.create({
+            title: title,
+            iconBg: iconBg,
+            iconUrl: iconUrl
+        })
+
+        if (response) {
+            return res.status(200).json(response);
+        }
+
+    } catch (err) {
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
+}
+
+module.exports = { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, eligibleProgressiveBadgeUser, searchUser, getReportedUsers, reportedReasonCount, warnUser, BlockUser, terminateUser, requestedSkill, addSkillCategory, createBadge }
