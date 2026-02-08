@@ -17,6 +17,7 @@ const AdminUsers = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState([]);
   const [reportedUsers, setReportedUsers] = useState([]);
+  const [eligibleUsers, setEligibleUsers] = useState([])
 
   const handleViewProfile = async (info) => {
     setIsOpen(true);
@@ -41,11 +42,33 @@ const AdminUsers = () => {
       userId
     });
     if (response.data) {
-      setTimeout(() => {
-        toast.success("Warning message Sent Successfully");
-      }, 5000);
+      setReportedUsers(prev => prev.filter(report => report._id !== reportId))
+      toast.success("Warning message Sent Successfully");
     }
   };
+
+  const handleBlockUser = async (reportId, id) => {
+    const response = await axiosinstance.post('/Admin/block-user', { reportId: reportId, userId: id });
+    if (response.data.blockedUntil) {
+      setReportedUsers(prev => prev.filter(report => report._id !== reportId))
+      toast.info(`User Blocked Until ${response.data.blockedUntil}`);
+    }
+  }
+
+  const handleTerminateUser = async (reportId, id) => {
+    const response = await axiosinstance.post('/Admin/terminate-user', { userId: id })
+    if (response) {
+      setReportedUsers(prev => prev.filter(report => report._id !== reportId))
+      toast.info('User terminated succesFully')
+    }
+  }
+
+  const handleGetEligibleUser = async () => {
+    const response = await axiosinstance.get('/Admin/eligible-user');
+    if (response) {
+      setEligibleUsers(response.data)
+    }
+  }
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -73,6 +96,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     handleGetReportedUsers();
+    handleGetEligibleUser();
   }, [])
 
   const visibleUsers = showAllResults
@@ -88,7 +112,7 @@ const AdminUsers = () => {
   };
 
   return (
-    <div className="space-y-8 p-4 bg-black min-h-screen text-gray-100">
+    <div className="space-y-4 p-2 min-h-screen text-gray-100 flex flex-col">
       <Toaster position='top-center' />
       {/* SEARCH SECTION */}
       <div className="relative max-w-md">
@@ -171,16 +195,18 @@ const AdminUsers = () => {
       </div>
 
       {/* BADGE APPROVAL SECTION */}
-      <section className='flex justify-between gap-10'>
-        <div className='flex flex-col w-1/2 h-screen'>
+      <section className='flex flex-col h-screen space-y-10'>
+        <div className='flex flex-col w-full h-fit'>
           <h3 className="text-xl font-semibold mb-4 text-teal-400">Badge Approvals</h3>
           <div className="flex flex-col gap-4 bg-gray-500/20 rounded-xl overflow-y-scroll">
-            {[1, 2].map((u) => (
-              <div key={u} className="bg-slate-800/80 p-6 m-3 rounded-xl flex justify-between items-center border border-gray-900">
-                <div>
-                  <p className="font-medium text-white">User {u}</p>
-                  <p className="text-sm text-gray-400 italic">as a Python Learner</p>
-                  <p className="text-xs text-gray-500 mt-1">Request Date: 27/08/25</p>
+            {eligibleUsers.map((u, index) => (
+              <div key={index} className="bg-slate-800/80 p-6 m-3 rounded-xl flex justify-between items-center border border-gray-900">
+                <div className='flex gap-5 items-center'>
+                  <img src={u.profileImageUrl} alt="" className='w-9 h-9 object-cover rounded-full' />
+                  <div className='flex flex-col'>
+                    <p className="font-medium text-white">{u.userName}</p>
+                    <p className="text-sm text-gray-400 italic">Eligible for {u.skill} {u.badge} </p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button className="p-2 hover:bg-teal-900/50 text-teal-500 rounded-lg transition"><Check size={20} /></button>
@@ -190,6 +216,7 @@ const AdminUsers = () => {
             ))}
           </div>
         </div>
+        {console.log(eligibleUsers)}
 
         {/* REPORTED USERS TABLE */}
 
@@ -208,7 +235,6 @@ const AdminUsers = () => {
                   <th className="p-2 text-center">Actions</th>
                 </tr>
               </thead>
-              {console.log(reportedUsers)}
               {reportedUsers.length > 0 ?
                 reportedUsers.map((info, index) => {
 
@@ -243,10 +269,10 @@ const AdminUsers = () => {
                           <button onClick={() => handleSendWarning(info._id, info.reportedId._id)} className="bg-yellow-300 text-black p-2 rounded-lg cursor-pointer">
                             <TriangleAlert size={15} />
                           </button>
-                          <button className="bg-yellow-500 text-black p-2 rounded-lg cursor-pointer">
+                          <button onClick={() => handleBlockUser(info._id, info.reportedId._id)} className="bg-yellow-500 text-black p-2 rounded-lg cursor-pointer">
                             <BanIcon size={15} />
                           </button>
-                          <button className="bg-red-500 text-white p-2 rounded-lg cursor-pointer">
+                          <button onClick={() => handleTerminateUser(info._id, info.reportedId._id)} className="bg-red-500 text-white p-2 rounded-lg cursor-pointer">
                             <Trash2 size={15} />
                           </button>
                         </td>
