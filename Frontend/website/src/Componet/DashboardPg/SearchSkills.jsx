@@ -232,9 +232,19 @@ const SearchSkills = () => {
         )}
 
         {skillCategories.length <= 0 && (
-          <div className='w-full h-full mx-auto py-10'>
-            <h1 className='text-white'>No skill Categories found</h1>
-            <button onClick={() => setOpenRequestSkill(true)} className='bg-blue-400 text-white text-sm font-medium p-3 rounded-lg hover:bg-blue-200 hover:text-black cursor-pointer'>Request Skill</button>
+          <div className='w-full h-full mx-auto py-10 flex flex-col items-start'>
+            <h1 className='text-white text-xl mb-6'>No skill Categories found</h1>
+            
+            <div className='flex flex-col-reverse items-start gap-4'>
+              <button onClick={() => setOpenRequestSkill(true)} className='bg-blue-400 text-white text-sm font-medium p-3 rounded-lg hover:bg-blue-200 hover:text-black cursor-pointer'>
+                Request Skill
+              </button>
+              
+              <div className='flex gap-4'>
+                <img src="/SadStep-1.png" alt="Thinking Man 1" className="w-30 h-auto object-contain" />
+                <img src="/SadStep-2.png" alt="Thinking Man 2" className="w-30 h-auto object-contain" />
+              </div>
+            </div>
           </div>
         )}
       </div>
