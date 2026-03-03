@@ -12,7 +12,7 @@ const NotesList = () => {
 
   const handleFetchNotes = async (e) => {
     // e.preventDefault();
-    const response = await axiosinstance.get('http://localhost:5000/Notes/fetch-Notes')
+    const response = await axiosinstance.get('/Notes/fetch-Notes')
     if (response.data) {
       setFetchedNotes(response.data)
     } else {
@@ -21,7 +21,7 @@ const NotesList = () => {
   }
 
   const handleEditNote = async (note) => {
-    const response = await axiosinstance.put('http://localhost:5000/Notes/edit-Note', { id: note._id, title: editData.title, content: editData.content })
+    const response = await axiosinstance.put('/Notes/edit-Note', { id: note._id, title: editData.title, content: editData.content })
     if (response) {
       handleFetchNotes();
       setEditingId(null)
@@ -36,7 +36,7 @@ const NotesList = () => {
 
   // DELETE
   const handleDeleteNote = async (note) => {
-    const response = await axiosinstance.delete(`http://localhost:5000/Notes/delete-Notes/${note._id}`);
+    const response = await axiosinstance.delete(`/Notes/delete-Notes/${note._id}`);
     if (!response) {
       console.log('Something went wrong in deleting Note');
     } else {

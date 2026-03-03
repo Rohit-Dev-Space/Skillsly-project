@@ -36,7 +36,7 @@ export default function SignUp({ page, setPage }) {
             const profileImgUrl = await uploadProfilePic(profilePic, email);
             console.log("Profile Image URL:", profileImgUrl);
 
-            const response = await axiosinstance.post('http://localhost:5000/api/auth/register-initial', { name, email, password, profileImageUrl: profileImgUrl, userName });
+            const response = await axiosinstance.post('/api/auth/register-initial', { name, email, password, profileImageUrl: profileImgUrl, userName });
             const { token } = response.data
             if (token) {
                 localStorage.setItem('token', response.data.token)

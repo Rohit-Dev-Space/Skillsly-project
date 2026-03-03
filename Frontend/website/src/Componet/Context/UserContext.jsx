@@ -17,7 +17,7 @@ const UserProvider = ({ children }) => {
 
         const fetchUser = async () => {
             try {
-                const response = await axiosinstance.get('http://localhost:5000/api/auth/profile')
+                const response = await axiosinstance.get('/api/auth/profile')
                 setUser(response.data);
             } catch (error) {
                 if (

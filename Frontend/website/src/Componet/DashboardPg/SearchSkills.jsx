@@ -20,7 +20,7 @@ const SearchSkills = () => {
   const [requestedSkill, setRequestedSkill] = useState('');
 
   const handleGetSkillCategories = async () => {
-    const response = await axiosinstance.get('http://localhost:5000/skills/GetSkillCategories');
+    const response = await axiosinstance.get('/skills/GetSkillCategories');
     if (!response) {
       console.error("Error fetching user data:", error);
     } else {
@@ -87,7 +87,7 @@ const SearchSkills = () => {
   const topFourSkills = (user?.skillsWantToKnow ?? []).slice(0, 4);
 
   const handleGetRecommendedSkill = async () => {
-    const response = await axiosinstance.post('http://localhost:5000/skills/getReccomendedSkills', {
+    const response = await axiosinstance.post('/skills/getReccomendedSkills', {
       skills: topFourSkills
     });
     if (!response) {
@@ -139,7 +139,7 @@ const SearchSkills = () => {
 
       try {
         const res = await axiosinstance.get(
-          `http://localhost:5000/skills/searchSkill?q=${skillSearch}`
+          `/skills/searchSkill?q=${skillSearch}`
         );
         setSkillCategories(res.data.data);
       } catch (err) {

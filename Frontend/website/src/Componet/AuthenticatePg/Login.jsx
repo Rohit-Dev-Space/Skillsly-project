@@ -27,7 +27,7 @@ export default function Login({ page, setPage }) {
         }
         setError('')
         try {
-            const response = await axiosinstance.post('http://localhost:5000/api/auth/login', { email, password })
+            const response = await axiosinstance.post('/api/auth/login', { email, password })
 
             const { token } = response.data
             if (token) {
@@ -76,7 +76,7 @@ export default function Login({ page, setPage }) {
                             onSuccess={async (credentialResponse) => {
                                 try {
                                     const res = await axiosinstance.post(
-                                        "http://localhost:5000/api/auth/google-login",
+                                        "/api/auth/google-login",
                                         { credential: credentialResponse.credential }
                                     );
 

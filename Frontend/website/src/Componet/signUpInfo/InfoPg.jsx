@@ -80,7 +80,7 @@ export default function SignUpInfo() {
             const workImageUrl = await uploadWorkImages(workProofImg, user.email);
 
             const response = await axiosinstance.put(
-                'http://localhost:5000/api/auth/register-final',
+                '/api/auth/register-final',
                 {
                     email: user.email,
                     skillsKnow: skillsKnown,
