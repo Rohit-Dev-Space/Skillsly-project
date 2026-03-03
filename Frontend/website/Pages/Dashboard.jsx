@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 
-import DashboardMain from "../src/Componet/DashboardMain";
+import DashboardMain from "../src/Componet/DashBoardMain";
 import UserProfile from "../src/Componet/DashboardPg/Profile";
 import SearchSkills from "../src/Componet/DashboardPg/SearchSkills";
 import GroupsList from "../src/Componet/DashboardPg/GroupsList";
