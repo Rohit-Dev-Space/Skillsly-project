@@ -4,7 +4,7 @@ import Authenticate from '../Pages/Authenticate';
 import SignUpInfo from '../Pages/SignUpInfo';
 import Dashboard from '../Pages/Dashboard';
 import UserProvider from "./Componet/Context/UserContext";
-
+import BlockedPage from "./Utilities/BlockedPage";
 import AdminPg from "../Pages/AdminPg";
 
 function App() {
@@ -16,11 +16,8 @@ function App() {
           <Route path="/authenticate" element={<Authenticate />} />
           <Route path="/dashboard/*" element={<Dashboard />} />
           <Route path="/Sign-up-info" element={<SignUpInfo />} />
-          
-          
+          <Route path="/BlockedPage" element={<BlockedPage />} />
           <Route path="/AdmindashboardPages/*" element={<AdminPg />} />
-          
-          {/* Fallback to redirect any old /admin links to your new path */}
           <Route path="/admin/*" element={<Navigate to="/AdmindashboardPages" replace />} />
         </Routes>
       </Router>

@@ -2,64 +2,71 @@ import { Trash2 } from 'lucide-react';
 import axiosinstance from '../../Utilities/axiosIntance';
 import React, { useEffect, useState } from 'react';
 import { toast, Toaster } from 'sonner';
+import MultiImageSelector from '../../Componet/MultiImageSelector';
+import { uploadSkillImage, uploadBadgeImages } from '../../Componet/Inputs/UploadToSupabase';
 
 const AdminSkills = () => {
-
   const [userRequests, setUserRequests] = useState([]);
 
-  // Skill category state (existing)
+  // Skill category state
   const [title, setTitle] = useState('');
-  const [iconBg, setIconBg] = useState('');
-  const [iconUrl, setIconUrl] = useState('');
+  const [iconBg, setIconBg] = useState('#FFFFFF');
+  const [iconUrl, setIconUrl] = useState([]);
   const [skillError, setSkillError] = useState('');
+  const [Guru, setGuru] = useState([]);
+  const [EfficiencyIII, setEfficiencyIII] = useState([]);
+  const [EfficiencyII, setEfficiencyII] = useState([]);
   const [badgeError, setBadgeError] = useState('');
+  const [skillCategories, setSkillCategories] = useState([]);
 
-  // Badge creation state (new but minimal)
-  const [badgeType, setBadgeType] = useState('');
+  // Badge creation state
+  const [badgeType, setBadgeType] = useState('SELECT'); // badge type select
   const [badgeTitle, setBadgeTitle] = useState('');
   const [badgeSkill, setBadgeSkill] = useState('');
   const [badgeDescription, setBadgeDescription] = useState('');
-
-  // Progressive badge levels
-  const [levels, setLevels] = useState({
-    level3: { icon: '', rating: '', reviews: '' },
-    level2: { icon: '', rating: '', reviews: '' },
-    guru: { icon: '', rating: '', reviews: '' }
-  });
-
-  // Achievement badge
-  const [achievementIcon, setAchievementIcon] = useState('');
   const [achievementCondition, setAchievementCondition] = useState('');
   const [achievementCount, setAchievementCount] = useState('');
+  const [achievementIcon, setAchievementIcon] = useState([]);
+
+  const mastery = [
+    { name: 'Guru', state: Guru, setState: setGuru },
+    { name: 'Efficiency II', state: EfficiencyII, setState: setEfficiencyII },
+    { name: 'Efficiency III', state: EfficiencyIII, setState: setEfficiencyIII },
+  ];
+
+  const [levels, setLevels] = useState({
+    EfficiencyIII: { icon: '', rating: '', reviews: '' },
+    EfficiencyII: { icon: '', rating: '', reviews: '' },
+    Guru: { icon: '', rating: '', reviews: '' }
+  });
 
   const handleGetUserRequest = async () => {
     const response = await axiosinstance.get('/Admin/user-requests');
     if (response) setUserRequests(response.data);
   };
 
-  useEffect(() => {
-    handleGetUserRequest();
-  }, []);
+  const handleGetSkillCategories = async () => {
+    const response = await axiosinstance.get('/skills/GetSkillCategories');
+    if (response.data?.data) setSkillCategories(response.data.data);
+  };
 
   const handleAddSkill = async (e) => {
     e.preventDefault();
-
-    if (!title || !iconBg || !iconUrl) {
-      setError("All Feilds Are Required");
+    if (!title || !iconBg || iconUrl.length === 0) {
+      setSkillError("All Fields Are Required");
       return;
     }
-
+    const skillImage = await uploadSkillImage(iconUrl[0]?.file);
     const response = await axiosinstance.post('/Admin/add-skill', {
       title,
       iconBg,
-      iconUrl
+      iconUrl: skillImage
     });
-
     if (response) {
-      toast.success('Skill Category Added Succesfully');
+      toast.success('Skill Category Added Successfully');
       setTitle('');
-      setIconBg('');
-      setIconUrl('');
+      setIconBg('#FFFFFF');
+      setIconUrl([]);
       setSkillError('');
     }
   };
@@ -68,11 +75,19 @@ const AdminSkills = () => {
     e.preventDefault();
     let payload = {};
 
-    if (badgeType === 'Progressive') {
-      if (!badgeSkill || !badgeDescription || !levels) {
-        setBadgeError('Must Fill All the Fields')
-        return
+    if (badgeType === 'SELECT') {
+      setBadgeError('Please select a badge type');
+      return;
+    }
+
+    if (badgeType === 'SKILL') {
+      if (!badgeSkill || !badgeDescription || !levels || !Guru.length || !EfficiencyII.length || !EfficiencyIII.length) {
+        setBadgeError('All Skill Badge Fields Are Required');
+        return;
       }
+
+      const uploadedIcons = await uploadBadgeImages({ Guru, EfficiencyII, EfficiencyIII });
+
       payload = {
         skill: badgeSkill,
         type: "SKILL",
@@ -80,60 +95,68 @@ const AdminSkills = () => {
         levels: [
           {
             name: "Efficiency III",
-            minAvgRating: Number(levels.level3.rating),
-            minReviews: Number(levels.level3.reviews),
-            iconUrl: levels.level3.icon
+            minAvgRating: Number(levels.EfficiencyIII.rating),
+            minReviews: Number(levels.EfficiencyIII.reviews),
+            iconUrl: uploadedIcons.EfficiencyIII
           },
           {
             name: "Efficiency II",
-            minAvgRating: Number(levels.level2.rating),
-            minReviews: Number(levels.level2.reviews),
-            iconUrl: levels.level2.icon
+            minAvgRating: Number(levels.EfficiencyII.rating),
+            minReviews: Number(levels.EfficiencyII.reviews),
+            iconUrl: uploadedIcons.EfficiencyII
           },
           {
             name: "Guru",
-            minAvgRating: Number(levels.guru.rating),
-            minReviews: Number(levels.guru.reviews),
-            iconUrl: levels.guru.icon
+            minAvgRating: Number(levels.Guru.rating),
+            minReviews: Number(levels.Guru.reviews),
+            iconUrl: uploadedIcons.Guru
           }
         ]
       };
-    }
-
-    if (badgeType === 'Non-skill') {
-      if (!badgeTitle || !badgeDescription || !achievementIcon || !achievementCondition || !achievementCount) {
-        setBadgeError('Must Fill All the Fields')
-        return
+    } else if (badgeType === 'ACHIEVEMENT') {
+      if (!badgeTitle || !badgeDescription || !achievementCondition || !achievementCount || achievementIcon.length === 0) {
+        setBadgeError('All Achievement Badge Fields Are Required');
+        return;
       }
+
+      const iconUploaded = await uploadSkillImage(achievementIcon[0]?.file);
+
       payload = {
         title: badgeTitle,
         type: "ACHIEVEMENT",
         description: badgeDescription,
-        iconUrl: achievementIcon,
         condition: achievementCondition,
-        count: achievementCount
+        count: Number(achievementCount),
+        iconUrl: iconUploaded
       };
     }
 
-    const response = await axiosinstance.post('/Admin/create-badge', payload)
-
+    const response = await axiosinstance.post('/Admin/create-badge', payload);
     if (response) {
-      setBadgeType('')
+      toast.success('Badge Created Successfully');
       setBadgeTitle('');
       setBadgeSkill('');
       setLevels({
-        level3: { icon: '', rating: '', reviews: '' },
-        level2: { icon: '', rating: '', reviews: '' },
-        guru: { icon: '', rating: '', reviews: '' }
+        EfficiencyIII: { icon: '', rating: '', reviews: '' },
+        EfficiencyII: { icon: '', rating: '', reviews: '' },
+        Guru: { icon: '', rating: '', reviews: '' }
       });
       setBadgeDescription('');
-      setAchievementIcon('');
+      setAchievementIcon([]);
       setAchievementCondition('');
       setAchievementCount('');
-
-      toast.success('Badge Created Successfully')
+      setBadgeError('');
+      setGuru([]);
+      setEfficiencyII([]);
+      setEfficiencyIII([]);
+      setBadgeType('SELECT');
     }
   };
+
+  useEffect(() => {
+    handleGetUserRequest();
+    handleGetSkillCategories();
+  }, []);
 
   return (
     <div className='flex flex-col gap-20'>
@@ -156,143 +179,143 @@ const AdminSkills = () => {
           </div>
         </div>
 
-        {/* RIGHT: ADD BADGE */}
+        {/* RIGHT: ADD SKILL CATEGORY FORM */}
         <div className='space-y-4'>
-          <h3 className="text-xl font-semibold text-teal-400">Add New badge</h3>
+          <h3 className="text-xl font-semibold text-teal-400">Add New Skill Category</h3>
           <div className="bg-black p-8 rounded-2xl border border-gray-800 h-full">
-            <form className="space-y-10" onSubmit={handleCreateBadge}>
-
-              <label className='mr-4 bg-black text-white'>Select the badge type :</label>
-              <select
-                value={badgeType}
-                onChange={(e) => setBadgeType(e.target.value)}
-                className='outline-1 outline-white p-2 rounded-lg'
-              >
-                <option className='bg-black text-white' value="">Select</option>
-                <option className='bg-black text-white' value="Progressive">Progressive Badge</option>
-                <option className='bg-black text-white' value="Non-skill">Non-skill Badge</option>
-              </select>
-
-              {badgeType === 'Progressive' && (
-                <div className='flex flex-col gap-3'>
+            <form className="space-y-10" onSubmit={handleAddSkill}>
+              <div className='flex gap-10'>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder='Skill Name'
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                <div className="flex items-center gap-4 w-full">
                   <input
-                    value={badgeSkill}
-                    onChange={(e) => setBadgeSkill(e.target.value)}
-                    placeholder='Skill Name'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                    type="color"
+                    value={iconBg}
+                    onChange={(e) => setIconBg(e.target.value)}
+                    className="w-14 h-14 cursor-pointer border border-gray-700 bg-transparent"
                   />
                   <input
-                    value={badgeDescription}
-                    onChange={(e) => setBadgeDescription(e.target.value)}
-                    placeholder='Badge Description'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                  />
-
-                  {["level3", "level2", "guru"].map((lvl, i) => (
-                    <div key={lvl} className='flex gap-3'>
-                      <input
-                        placeholder='Image Link'
-                        className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                        onChange={(e) =>
-                          setLevels({ ...levels, [lvl]: { ...levels[lvl], icon: e.target.value } })
-                        }
-                      />
-                      <input
-                        placeholder='Min Rating'
-                        className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                        onChange={(e) =>
-                          setLevels({ ...levels, [lvl]: { ...levels[lvl], rating: e.target.value } })
-                        }
-                      />
-                      <input
-                        placeholder='Min Reviews'
-                        className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                        onChange={(e) =>
-                          setLevels({ ...levels, [lvl]: { ...levels[lvl], reviews: e.target.value } })
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {badgeType === 'Non-skill' && (
-                <div className='flex flex-col gap-4'>
-                  <input
-                    value={badgeTitle}
-                    onChange={(e) => setBadgeTitle(e.target.value)}
                     type="text"
-                    placeholder='Badge Name'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3 outline-none focus:border-teal-500"
-                  />
-                  <input
-                    value={badgeDescription}
-                    onChange={(e) => setBadgeDescription(e.target.value)}
-                    placeholder='Badge Description'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                  />
-                  <input
-                    value={achievementIcon}
-                    placeholder='Badge Image Link'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                    onChange={(e) => setAchievementIcon(e.target.value)}
-                  />
-                  <input
-                    value={achievementCondition}
-                    placeholder='Achievement Condition (e.g groups_created)'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                    onChange={(e) => setAchievementCondition(e.target.value)}
-                  />
-                  <input
-                    value={achievementCount}
-                    placeholder='Minimum Count'
-                    className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-                    onChange={(e) => setAchievementCount(e.target.value)}
+                    value={iconBg}
+                    readOnly
+                    placeholder="#000000"
+                    className="flex-1 bg-gray-700/20 border border-gray-700 rounded-lg p-3"
                   />
                 </div>
-              )}
-              {badgeError && <p className='text-red-400'>{badgeError}</p>}
-              <button
-                disabled={badgeType === '' ? true : false}
-                type="submit"
-                className={`w-full py-3 ${badgeType === '' ? 'bg-teal-800 cursor-not-allowed' : 'bg-teal-600 cursor-pointer'}  rounded-lg font-bold mt-4 hover:bg-teal-700 transition`}
-              >
-                Add Badge
+              </div>
+              <p>Skill Category Image :</p>
+              <div><MultiImageSelector images={iconUrl} setImages={setIconUrl} max={1} /></div>
+              {skillError && <p className='text-red-400'>{skillError}</p>}
+              <button className="w-full py-3 bg-teal-600 rounded-lg font-bold hover:bg-teal-700">
+                Add Skill Category
               </button>
-
             </form>
           </div>
         </div>
       </div>
 
-      {/* EXISTING SKILL CATEGORY FORM */}
+      {/* ADD BADGE SECTION */}
       <div className='space-y-4'>
-        <h3 className="text-xl font-semibold text-teal-400">Add New Skill Category</h3>
+        <h3 className="text-xl font-semibold text-teal-400">Add New Badge</h3>
         <div className="bg-black p-8 rounded-2xl border border-gray-800 h-full">
-          <form className="space-y-10" onSubmit={handleAddSkill}>
-            <div className='flex gap-10'>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder='Skill Name'
-                className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-              />
-              <input
-                value={iconBg}
-                onChange={(e) => setIconBg(e.target.value)}
-                placeholder='Icon background'
-                className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-              />
-            </div>
-            <input
-              value={iconUrl}
-              onChange={(e) => setIconUrl(e.target.value)}
-              placeholder='Icon URL'
-              className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
-            />
-            {skillError && <p className='text-red-400'>{skillError}</p>}
-            <button className="w-full py-3 bg-teal-600 rounded-lg font-bold hover:bg-teal-700">
-              Add Skill Category
+          <form className="space-y-10" onSubmit={handleCreateBadge}>
+            <select
+              value={badgeType}
+              onChange={(e) => setBadgeType(e.target.value)}
+              className='w-full h-10 border border-white rounded-xl bg-black px-5'
+            >
+              <option value="SELECT">Select Badge Type</option>
+              <option value="SKILL">Skill</option>
+              <option value="ACHIEVEMENT">Achievement</option>
+            </select>
+
+            {/* Skill Badge Form */}
+            {badgeType === 'SKILL' && (
+              <>
+                <select
+                  value={badgeSkill}
+                  onChange={(e) => setBadgeSkill(e.target.value)}
+                  className='w-full h-10 border border-white rounded-xl bg-black px-5'
+                >
+                  <option value="" disabled>Select a Skill</option>
+                  {skillCategories.map((item, index) => (
+                    <option key={index} value={item.title}>{item.title}</option>
+                  ))}
+                </select>
+                <input
+                  value={badgeDescription}
+                  onChange={(e) => setBadgeDescription(e.target.value)}
+                  placeholder='Badge Description'
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                {mastery.map((lvl, i) => (
+                  <div key={i} className='flex flex-col gap-3 my-2'>
+                    <p>Skill Level {lvl.name}</p>
+                    <div className='flex gap-2 items-end'>
+                      <MultiImageSelector images={lvl.state} setImages={lvl.setState} max={1} />
+                      <input
+                        placeholder='Min Rating'
+                        className="w-full h-15 bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                        onChange={(e) =>
+                          setLevels({ ...levels, [lvl.name.replace(" ", "")]: { ...levels[lvl.name.replace(" ", "")], rating: e.target.value } })
+                        }
+                      />
+                      <input
+                        placeholder='Min Reviews'
+                        className="w-full h-15 bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                        onChange={(e) =>
+                          setLevels({ ...levels, [lvl.name.replace(" ", "")]: { ...levels[lvl.name.replace(" ", "")], reviews: e.target.value } })
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {/* Achievement Badge Form */}
+            {badgeType === 'ACHIEVEMENT' && (
+              <>
+                <input
+                  value={badgeTitle}
+                  onChange={(e) => setBadgeTitle(e.target.value)}
+                  placeholder='Badge Title'
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                <input
+                  value={badgeDescription}
+                  onChange={(e) => setBadgeDescription(e.target.value)}
+                  placeholder='Badge Description'
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                <input
+                  value={achievementCondition}
+                  onChange={(e) => setAchievementCondition(e.target.value)}
+                  placeholder='Condition'
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                <input
+                  value={achievementCount}
+                  onChange={(e) => setAchievementCount(e.target.value)}
+                  placeholder='Count'
+                  type="number"
+                  className="w-full bg-gray-700/20 border border-gray-700 rounded-lg p-3"
+                />
+                <p>Achievement Icon:</p>
+                <MultiImageSelector images={achievementIcon} setImages={setAchievementIcon} max={1} />
+              </>
+            )}
+
+            {badgeError && <p className='text-red-400'>{badgeError}</p>}
+            <button
+              type="submit"
+              className="w-full py-3 bg-teal-600 cursor-pointer rounded-lg font-bold mt-4 hover:bg-teal-700 transition"
+            >
+              Add Badge
             </button>
           </form>
         </div>

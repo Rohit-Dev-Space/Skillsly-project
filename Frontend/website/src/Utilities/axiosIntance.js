@@ -15,4 +15,23 @@ axiosinstance.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+axiosinstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (
+            error.response?.status === 403 &&
+            error.response.data?.blocked
+        ) {
+            const blockedUserData = {
+                blockedAt: error.response.data.blockedAt,
+            };
+            localStorage.setItem("blockedUser", JSON.stringify(blockedUserData));
+
+            // Optional: remove token so all requests fail immediately
+            localStorage.removeItem("token");
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default axiosinstance;

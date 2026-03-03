@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Search, Notebook, MessageSquare, LogOut, Users, ChevronLeft } from 'lucide-react';
+import { User, Search, Notebook, MessageSquare, LogOut, Users, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useContext } from 'react';
 import { UserContext } from '../Context/UserContext'
 
@@ -43,7 +43,7 @@ const Sidebar = ({ isOpen }) => {
             <img src={user?.profileImageUrl} alt="" className={`w-full h-full object-cover`} />
           </button>
         </div>
-        <p className="text-lg font-semibold mb-3">{user?.userName}</p>
+        {isOpen && <p className="text-lg font-semibold mb-3">{user?.userName}</p>}
         {isOpen && <button
           onClick={() => navigate('/dashboard/profile')}
           className={`text-sm rounded-full px-4 py-1 transition-colors cursor-pointer
@@ -59,8 +59,12 @@ const Sidebar = ({ isOpen }) => {
         <NavItem text={isOpen ? "Saved Notes" : ""} icon={Notebook} path="/dashboard/notes" />
         <NavItem text={isOpen ? "Messages" : ""} icon={MessageSquare} path="/dashboard/messages" />
       </nav>
-
-      <div className="p-8">
+      <div className="flex flex-col gap-7 p-8">
+        {user.role === 'admin' &&
+          <button onClick={() => navigate('/admin')} className='flex gap-3 items-center cursor-pointer text-gray-400 hover:text-teal-400'>
+            <LayoutDashboard /> <span>Admin Dashboard</span>
+          </button>
+        }
         <button onClick={clearedUser} className="flex items-center cursor-pointer text-gray-400 hover:text-red-400">
           <LogOut className="w-5 h-5 mr-3" /> {isOpen && 'Log out'}
         </button>

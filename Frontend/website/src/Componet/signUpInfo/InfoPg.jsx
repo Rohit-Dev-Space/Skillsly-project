@@ -11,7 +11,6 @@ import Loader from "../../Utilities/Loader";
 
 export default function SignUpInfo() {
 
-    const skillsList = ["React.js", "Node.js", "MongoDB", "UI/UX", "Figma"];
     const languages = ["English", "Hindi", "French", "Spanish", "Marathi", "Kannada", "Tamil", "Telugu", "Malyali"]
 
     const [skillsKnown, setSkillsKnown] = useState([]);
@@ -22,8 +21,16 @@ export default function SignUpInfo() {
     const [languageKnown, setLanguageKnown] = useState([])
     const [error, setError] = useState([]);
     const { user, updateUser } = useContext(UserContext);
+    const [skillsList, setSkillsList] = useState([]);
     const [isLoader, setIsLoader] = useState(false)
     const navigate = useNavigate();
+
+    const handleGetSkillList = async () => {
+        const response = await axiosinstance.get('/skills/get-skillList')
+        if (response) {
+            setSkillsList(response.data.map(item => item.title));
+        }
+    }
 
     const toggleSkill = (skill) => {
         if (skillsKnown.includes(skill)) {
@@ -33,8 +40,6 @@ export default function SignUpInfo() {
         }
         console.log(skillsKnown);
     };
-
-    console.log(workProofImg);
 
     const toggleSkillWantToKnow = (skill) => {
         setSkillWantToKnow(prev =>
@@ -55,53 +60,65 @@ export default function SignUpInfo() {
 
     const handleSubmitSignInInfo = async (e) => {
         e.preventDefault();
+        setIsLoader(true);
 
         const errors = [];
 
-        if (skillsKnown.length === 0) {
-            errors.push('Enter the skills you know (Step 1)');
-        }
-
-        if (skillWantToKnow.length === 0) {
-            errors.push('Enter the skills you want to learn (Step 1)');
-        }
-
-        if (languageKnown.length === 0) {
-            errors.push('Enter languages you know (Step 3)');
-        }
+        if (skillsKnown.length === 0) errors.push('Enter the skills you know (Step 1)');
+        if (skillWantToKnow.length === 0) errors.push('Enter the skills you want to learn (Step 1)');
+        if (languageKnown.length === 0) errors.push('Enter languages you know (Step 3)');
 
         if (errors.length > 0) {
             setError(errors);
+            setIsLoader(false);
             return;
         }
 
-        setError([])
+        setError([]);
 
         try {
             const workImageUrl = await uploadWorkImages(workProofImg, user.email);
-            console.log("Work images uploaded:", workImageUrl);
-            const response = await axiosinstance.put('http://localhost:5000/api/auth/register-final', { email: user.email, skillsKnow: skillsKnown, skillsWantToKnow: skillWantToKnow, socialLink: url, languages: languageKnown, workImageUrl: workImageUrl, bio: bio });
-            if (response && response.data && response.data.user) {
+
+            const response = await axiosinstance.put(
+                'http://localhost:5000/api/auth/register-final',
+                {
+                    email: user.email,
+                    skillsKnow: skillsKnown,
+                    skillsWantToKnow: skillWantToKnow,
+                    socialLink: url,
+                    languages: languageKnown,
+                    workImageUrl,
+                    bio
+                }
+            );
+
+            if (response?.data?.user) {
                 updateUser(response.data);
-                console.log("User info taken successfully");
-                navigate('/dashboard')
+
+                setTimeout(() => {
+                    setIsLoader(false);
+                    navigate('/dashboard');
+                }, 4000);
             }
+
         } catch (err) {
-            console.log(err);
+            console.error(err);
+            setIsLoader(false);
         }
-    }
+    };
+
+    useEffect(() => {
+        handleGetSkillList();
+    }, [])
+
     return (
         <div className="flex h-fit bg-[#292524] justify-between text-white items-center w-full">
-            <form onSubmit={handleSubmitSignInInfo} className="w-full h-auto ">
+            <form className="w-full h-auto ">
                 <Stepper
                     initialStep={1}
-                    onStepChange={(step) => {
-                        console.log(step);
-                    }}
-                    onFinalStepCompleted={() => console.log("All steps completed!")}
+                    onComplete={handleSubmitSignInInfo}
                     backButtonText="Previous"
                     nextButtonText="Next"
-                    onComplete={handleSubmitSignInInfo}
                 >
                     <Step >
                         <div className="flex flex-col gap-10 justify-center py-2 items-center">
@@ -114,11 +131,11 @@ export default function SignUpInfo() {
                                 />
                                 <div className="flex flex-col gap-5 justify-center">
                                     <h2 className="text-sm pl-2">Select The Skills <span className="text-lg text-green-400">" YOU " </span> Know :</h2>
-                                    <div className="flex flex-wrap gap-3 text-white">
-                                        {skillsList.map(skill => (
+                                    <div className="flex flex-wrap gap-3 h-23 text-white overflow-y-scroll">
+                                        {skillsList.map((skill, index) => (
                                             <button
                                                 type="button"
-                                                key={skill}
+                                                key={index}
                                                 onClick={() => toggleSkill(skill)}
                                                 className={`px-4 py-2 rounded-full text-sm border transition
                                                 ${skillsKnown.includes(skill)
@@ -140,7 +157,7 @@ export default function SignUpInfo() {
                                 />
                                 <div className="flex flex-col gap-5 justify-center">
                                     <h2 className="text-sm pl-2">Select The Skills you<span className="text-lg text-green-400"> " WANT " </span>to Learn :</h2>
-                                    <div className="flex flex-wrap gap-3 text-white">
+                                    <div className="flex flex-wrap gap-3 h-23 text-white overflow-y-scroll">
                                         {skillsList.map(skill => (
                                             <button
                                                 type="button"
@@ -195,6 +212,9 @@ export default function SignUpInfo() {
 
                                 ))}
                             </div>
+                            <p className="text-sm text-gray-300">
+                                Upload your work (max 5 images)
+                            </p>
                             <MultiImageSelector images={workProofImg} setImages={setWorkProofImg} max={5} />
                         </div>
                     </Step>

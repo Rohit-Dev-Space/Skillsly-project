@@ -10,22 +10,26 @@ import Ranking from "../src/Componet/DashboardPg/Ranking";
 import CallJoin from "../src/Componet/DashboardPg/CallJoin";
 import UserMessages from "../src/Componet/DashboardPg/UserMessages"
 import MessageList from "../src/Componet/DashboardPg/MessageList"
+import ProtectedNavigation from "../src/Utilities/ProtectedNavigation";
 
 export default function Dashboard() {
   return (
-    <Routes>
-      <Route element={<DashboardMain />}>
-        <Route path="profile" element={<UserProfile />} />
-        <Route index element={<SearchSkills />} />
-        <Route path="ranking/:category" element={<Ranking />} />
-        <Route path="groups" element={<GroupsList />} />
-        <Route path="messages" element={<MessageList />} />
-        <Route path="notes" element={<NotesList />} />
-        <Route path="groups/:groupName/:groupId" element={<GroupMessages />} />
-        <Route path="messages/:userName/:userId" element={<UserMessages />} />
-      </Route>
-      <Route path="session/:roomId/:sessionToken" element={<CallJoin />} />
-    </Routes>
+    <ProtectedNavigation>
+      <Routes>
+        <Route element={<DashboardMain />}>
+          <Route path="profile" element={<UserProfile />} />
+          <Route index element={<SearchSkills />} />
+          <Route path="ranking/:category/:categoryId" element={<Ranking />} />
+          <Route path="groups" element={<GroupsList />} />
+          <Route path="messages" element={<MessageList />} />
+          <Route path="notes" element={<NotesList />} />
+          <Route path="groups/:groupName/:groupId" element={<GroupMessages />} />
+          <Route path="messages/chats/:userId" element={<UserMessages />} />
+        </Route>
+        <Route path="session/:groupName/:roomId/:sessionToken" element={<CallJoin />} />
+      </Routes >
+    </ProtectedNavigation>
+
   );
 }
 

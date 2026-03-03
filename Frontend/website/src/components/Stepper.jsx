@@ -53,11 +53,7 @@ export default function Stepper({
   const handleComplete = (e) => {
     setDirection(1);
     setIsLoader(true)
-    updateStep(totalSteps + 1);
-    if (onComplete) {
-      onComplete(e)
-    }
-
+    onComplete?.(e);
   };
 
   return (
@@ -121,7 +117,7 @@ export default function Stepper({
               )}
               <button
                 onClick={isLastStep ? handleComplete : handleNext}
-                type={isLastStep ? 'submit' : 'button'}
+                type="button"
                 className="duration-350 flex items-center justify-center rounded-full bg-[#B8FB70] py-1.5 px-3.5 font-medium tracking-tight text-black hover:text-white transition hover:bg-green-600 active:bg-green-700"
                 {...nextButtonProps}>
                 {isLastStep ? 'Complete' : nextButtonText}

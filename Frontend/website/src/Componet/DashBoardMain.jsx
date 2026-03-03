@@ -19,7 +19,7 @@ const DashboardMain = () => {
           <motion.div
             onClick={() => setIsSideMenuOpen(!isSideMenuOpen)}
             animate={{ rotate: isSideMenuOpen ? 180 : 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }} className={`absolute -right-7 cursor-pointer top-[35%] w-fit h-fit py-5 px-3 border border-white rounded-full bg-black/80 hover:border-teal-300 hover:text-teal-300`}>
+            transition={{ duration: 0.5, ease: "easeInOut" }} className={`absolute -right-4 cursor-pointer top-10 w-fit h-fit border border-white rounded-full bg-black/80 hover:border-teal-300 hover:text-teal-300`}>
             <ChevronRightIcon size={30} className='text-white' />
           </motion.div>
         </motion.div>

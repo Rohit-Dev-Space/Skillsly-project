@@ -74,11 +74,11 @@ const SearchSkills = () => {
   }
 
   const handleSkillClick = (category) => {
-    console.log(category.title)
     const slug = category.title
       .toLowerCase()
       .replace(/\s+/g, '-');
-    navigate(`/dashboard/ranking/${slug}`);
+    const skillId = category._id;
+    navigate(`/dashboard/ranking/${slug}/${skillId}`);
   };
 
   const { user } = useContext(UserContext);
@@ -157,7 +157,7 @@ const SearchSkills = () => {
   const hasUnread = notification.some(n => !n.isRead);
 
   return (
-    <div className="p-6 md:p-15 md:px-20 w-full h-full bg-[#0a0a0a]">
+    <div className="p-6 md:p-15 md:px-20 w-full h-full bg-black">
       <div className={`fixed w-full max-w-lg z-40`}>
         <input
           type="text"
@@ -185,7 +185,7 @@ const SearchSkills = () => {
         <h2 className="text-xl md:text-3xl font-medium text-teal-200 mb-6">Top Recommendation</h2>
       </div>
 
-      <div className="flex flex-wrap gap-8 z-10">
+      <div className="flex flex-wrap gap-8  z-10">
         {reccomendedSkills.map((skill) => (
           <div
             key={skill._id}
@@ -207,8 +207,8 @@ const SearchSkills = () => {
           </div>
         ))}
       </div>
-      <h2 className="text-xl md:text-3xl bg-[#0a0a0a] font-medium text-teal-200 mb-6" id='skillcategories'>{skillSearch ? <p className='w-full flex gap-2 items-center'>Search Results <Search size={35} className='text-teal-200' /></p> : "Skill Categories"}</h2>
-      <div className='flex flex-wrap bg-[#0a0a0a] gap-5 mt-10 z-10'>
+      <h2 className="text-xl md:text-3xl bg-black font-medium text-teal-200 mb-6" id='skillcategories'>{skillSearch ? <p className='w-full flex gap-2 items-center'>Search Results <Search size={35} className='text-teal-200' /></p> : "Skill Categories"}</h2>
+      <div className='flex flex-wrap bg-black gap-5 mt-10 z-10'>
         {skillCategories && (
           skillCategories.map((category) => (
             <div
@@ -232,17 +232,20 @@ const SearchSkills = () => {
         )}
 
         {skillCategories.length <= 0 && (
-          <div className='w-full h-full mx-auto py-10 flex flex-col items-start'>
-            <h1 className='text-white text-xl mb-6'>No skill Categories found</h1>
-            
-            <div className='flex flex-col-reverse items-start gap-4'>
-              <button onClick={() => setOpenRequestSkill(true)} className='bg-blue-400 text-white text-sm font-medium p-3 rounded-lg hover:bg-blue-200 hover:text-black cursor-pointer'>
+          <div className='w-full h-full mx-auto py-10 flex flex-col items-center bg-black'>
+            <div className='flex flex-col-reverse items-center gap-4'>
+              <button onClick={() => setOpenRequestSkill(true)} className='flex items-center justify-center -mt-5 gap-2 px-6 py-3 bg-blue-500 cursor-pointer hover:bg-blue-700 active:scale-95 text-white font-semibold rounded-lg shadow-md transition-all duration-200 ease-in-out'>
                 Request Skill
               </button>
-              
-              <div className='flex gap-4'>
-                <img src="/SadStep-1.png" alt="Thinking Man 1" className="w-30 h-auto object-contain" />
-                <img src="/SadStep-2.png" alt="Thinking Man 2" className="w-30 h-auto object-contain" />
+
+              <div className='flex -space-x-30 items-center justify-center w-full'>
+                <img src="/SadStep-1.png" alt="Thinking Man 1" className="scale-80 w-30 h-auto object-contain" />
+                <div className='flex flex-col items-center'>
+                  <h1 className='text-white text-2xl mb-10'>No skill Categories found :'(</h1>
+                  <h3 className='text-white/50 text-xl '>Can’t find what you need?</h3>
+                  <p className='text-white/20 text-lg text-center w-3/5'>Request this skill to be added by our admin team so we can better support your goals.</p>
+                </div>
+                <img src="/SadStep--2.png" alt="Thinking Man 2" className="w-30 h-auto object-contain" />
               </div>
             </div>
           </div>

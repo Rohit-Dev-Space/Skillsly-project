@@ -12,6 +12,7 @@ const GroupsList = () => {
   const [editedTitle, setEditedTitle] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [groupId, setGroupId] = useState(null);
+  const [title, setTitle] = useState('');
   const navigate = useNavigate();
   const { user } = useContext(UserContext);
 
@@ -43,13 +44,24 @@ const GroupsList = () => {
     }
   }
 
-  const handleDeleteGroupModal = (item) => {
+  const handleGroupModal = (item, title) => {
+    setTitle(title);
     setIsOpen(true);
     setGroupId(item._id);
   }
 
   const handleDeleteGroup = async (id) => {
     const response = await axiosinstance.delete(`/groups/delete-group/${id}`);
+    if (response.data) {
+      handleGetGroups();
+      setIsOpen(false);
+    } else {
+      console.log('Error deleting group');
+    }
+  }
+
+  const handleLeaveGroup = async (id) => {
+    const response = await axiosinstance.put(`/groups/leave-group/${id}`);
     if (response.data) {
       handleGetGroups();
       setIsOpen(false);
@@ -76,7 +88,7 @@ const GroupsList = () => {
               <div className='cursor-pointer flex justify-between w-6/7' onClick={() => handleNavigation(Item)}>
                 <div className='flex flex-col gap-2'>
                   <p className='text-sm text-gray-500 font-light'>Group Title</p>
-                  {selectedGroupId === Item._id ? <input type="text" onChange={(e) => { setEditedTitle(e.target.value) }} value={editedTitle} className="bg-[#111] text-white px-3 py-2 rounded-lg outline-none w-full" /> :
+                  {selectedGroupId === Item._id ? <input type="text" onClick={(e) => e.stopPropagation()} onChange={(e) => { setEditedTitle(e.target.value) }} value={editedTitle} className="bg-[#111] text-white px-3 py-2 rounded-lg outline-none w-full" /> :
                     <p className="text-white text-base md:text-lg font-medium">{Item.title}</p>}
                 </div>
                 <div>
@@ -88,20 +100,29 @@ const GroupsList = () => {
                 {selectedGroupId !== Item._id ?
                   (
                     <>
-                      <button onClick={() => handleEdit(Item)} className="p-2 cursor-pointer rounded-full hover:bg-[#1a1a1a] hover:text-teal-400 transition-colors">
+                      {Item.createdBy.userName === user?.userName && <button onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(Item)
+                      }} className="p-2 cursor-pointer rounded-full hover:bg-[#1a1a1a] hover:text-teal-400 transition-colors">
                         <Edit className="w-5 h-5" />
-                      </button>
-                      <button onClick={() => { handleDeleteGroupModal(Item) }} className="p-2 rounded-full hover:bg-[#1a1a1a] hover:text-red-500 transition-colors">
-                        {Item.createdBy._id === user._id ? <Trash2 className="w-5 h-5" /> : <LogOut className="w-5 h-5" />}
+                      </button>}
+                      <button onClick={() => { { Item.groupMembers.length >= 2 ? handleGroupModal(Item, 'Leave Group') : handleGroupModal(Item, 'Delete Group') } }} className="p-2 rounded-full  cursor-pointer hover:bg-[#1a1a1a] hover:text-red-500 transition-colors">
+                        {Item.groupMembers.length >= 2 ? <LogOut className="w-5 h-5" /> : <Trash2 className="w-5 h-5" />}
                       </button>
                     </>
 
                   ) : (
                     <>
-                      <button onClick={() => handleSaveTitle(Item)} className="p-2 cursor-pointer rounded-full hover:bg-[#1a1a1a] hover:text-teal-400 transition-colors">
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveTitle(Item)
+                      }} className="p-2 cursor-pointer rounded-full hover:bg-[#1a1a1a] hover:text-teal-400 transition-colors">
                         <Save className="w-5 h-5" />
                       </button>
-                      <button onClick={() => { setSelectedGroupId(null) }} className="p-2 rounded-full hover:bg-[#1a1a1a] hover:text-red-500 transition-colors">
+                      <button onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGroupId(null)
+                      }} className="p-2 rounded-full hover:bg-[#1a1a1a] hover:text-red-500 transition-colors">
                         <X className="w-5 h-5" />
                       </button>
                     </>
@@ -113,14 +134,14 @@ const GroupsList = () => {
         </div>
         {isOpen && (
           <Modal
-            title="Delete Group"
+            title={title}
             isClose={() => setIsOpen(false)}
             className={'absolute w-full h-full'}
           >
-            <div className="text-center w-full h-fit p-5 mx-3">{`Are you sure you want to delete these Group?`}</div>
+            <div className="text-center w-full h-fit p-5 mx-3">{`Are you sure you want to ${title}?`}</div>
             <div className="w-full h-fit flex items-center justify-center gap-5 p-10">
               <button onClick={() => setIsOpen(false)} className="w-fit h-fit px-7 cursor-pointer py-3 bg-white text-black rounded-xl">Cancel</button>
-              <button onClick={() => handleDeleteGroup(groupId)} className="w-fit h-fit px-7 cursor-pointer py-3 bg-red-400 text-white rounded-xl">Delete</button>
+              <button onClick={() => { title === 'Delete Group' ? handleDeleteGroup(groupId) : handleLeaveGroup(groupId) }} className="w-fit h-fit px-7 cursor-pointer py-3 bg-red-400 text-white rounded-xl">{title}</button>
             </div>
           </Modal>
         )}

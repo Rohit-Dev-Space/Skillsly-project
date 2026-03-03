@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from "react";
 import axiosinstance from "../../Utilities/axiosIntance"
+import { useNavigate } from "react-router-dom";
 
 export const UserContext = createContext();
 
@@ -19,7 +20,25 @@ const UserProvider = ({ children }) => {
                 const response = await axiosinstance.get('http://localhost:5000/api/auth/profile')
                 setUser(response.data);
             } catch (error) {
-                console.error("Error fetching user data:", error);
+                if (
+                    error.response?.status === 403 &&
+                    error.response.data?.blocked
+                ) {
+                    const blockedUserData = {
+                        blockedAt: error.response.data.blockedAt,
+                    };
+                    localStorage.setItem("blockedUser", JSON.stringify(blockedUserData));
+
+                    // Immediately set a "blocked user" object
+                    setUser({
+                        isBlocked: true,
+                        name: "Blocked User", // optional, any placeholder
+                        email: "",            // optional
+                    });
+
+                    return;
+                }
+                console.error("Other error:", error);
             } finally {
                 setLoading(false);
             }

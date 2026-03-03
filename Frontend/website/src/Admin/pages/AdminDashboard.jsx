@@ -7,20 +7,6 @@ import {
 import CountUp from '../../components/CountUp';
 import { ArrowUp } from 'lucide-react';
 
-const skillData = [
-  { name: 'Python', known: 40, want: 24 },
-  { name: 'React', known: 30, want: 45 },
-  { name: 'Node.js', known: 20, want: 38 },
-  { name: 'Java', known: 27, want: 15 },
-];
-
-const REGISTERED_VALUE = 75;
-const TOTAL_LIMIT = 100;
-
-
-
-const GAUGE_COLORS = ['#f43f5e', '#1f2937'];
-
 const AdminDashboard = () => {
 
   const [totalUsers, setTotalUsers] = useState(0);
@@ -29,35 +15,55 @@ const AdminDashboard = () => {
   const [reportedUserNumber, setReportedUserNumber] = useState(0)
   const [PopularSkills, setPopularSkills] = useState([])
   const [registrationTrend, setRegistrationTrend] = useState([]);
-  const reportCount = 8;
+  const [prevSafety, setPrevSafety] = useState(100);
 
-  const reportRate =
-    totalUsers > 0 ? (reportCount / totalUsers) * 100 : 0;
+  const riskRate =
+    activeUserNumber > 0
+      ? (reportedUserNumber / activeUserNumber) * 100
+      : 0;
+
+  const rawSafety = Math.max(0, Math.min(100, 100 - riskRate * 8));
+
+  const safetyScore = Math.round(
+    rawSafety * 0.4 + prevSafety * 0.6
+  );
+
+  useEffect(() => {
+    setPrevSafety(safetyScore);
+  }, [safetyScore]);
 
   const gaugeData = [
-    { value: reportRate },
-    { value: 100 - reportRate },
+    { value: safetyScore },
+    { value: 100 - safetyScore },
   ];
+
+  const START_ANGLE = 200;
+  const END_ANGLE = -20;
+  const TOTAL_SWEEP = START_ANGLE - END_ANGLE;
+
+  const angle =
+    START_ANGLE - (safetyScore / 100) * TOTAL_SWEEP;
+
+  const getSeverity = (score) => {
+    if (score > 85) return { label: "Safe", color: "text-emerald-400" };
+    if (score > 65) return { label: "Watchlist", color: "text-yellow-400" };
+    if (score > 40) return { label: "At Risk", color: "text-orange-400" };
+    return { label: "Critical", color: "text-rose-500" };
+  };
+
+  const severity = getSeverity(safetyScore);
+
+  const severityHex = {
+    "text-emerald-400": "#34d399",
+    "text-yellow-400": "#facc15",
+    "text-orange-400": "#fb923c",
+    "text-rose-500": "#f43f5e",
+  };
 
   const userData = [
     { name: 'Inactive users', value: totalUsers - activeUser },
     { name: 'Total users', value: totalUsers },
   ];
-
-  const getSeverity = (rate) => {
-    if (rate < 5) return { label: "Low Risk", color: "text-emerald-400" };
-    if (rate < 12) return { label: "Moderate", color: "text-yellow-400" };
-    return { label: "Critical", color: "text-rose-500" };
-  };
-
-  const severity = getSeverity(reportRate);
-
-  const gaugeMin = 0;
-  const gaugeMax = 100;
-
-  const angle =
-    200 - (reportRate / gaugeMax) * 220;
-
 
   const handleTotalUser = async () => {
     try {
@@ -128,6 +134,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const retentionRate =
+    totalUsers > 0
+      ? Math.round((activeUser / totalUsers) * 100)
+      : 0;
 
   useEffect(() => {
     handleTotalUser();
@@ -226,49 +236,32 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-black p-6 rounded-xl border border-gray-900 h-80 shadow-lg relative">
-          <h4 className="font-light text-2xl text-gray-400 ">Inactive Users portion</h4>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={gaugeData}
-                dataKey="value"
-                startAngle={200}
-                endAngle={-20}
-                cx="50%"
-                cy="60%"
-                innerRadius={80}
-                outerRadius={110}
-                paddingAngle={2}
-              >
-                <Cell fill="#f43f5e" />   {/* Reported */}
-                <Cell fill="#1f2937" />   {/* Remaining */}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className={`absolute flex flex-col items-center justify-center bottom-5 left-0 right-0 text-center`}>
-            <svg
-              viewBox="0 0 200 120"
-              className="absolute bottom-12 left-1/2 -translate-x-1/2 w-52 h-26 mb-3"
-            >
-              <g transform={`rotate(${angle}, 100, 100)`}>
-                <line
-                  x1="100"
-                  y1="100"
-                  x2="100"
-                  y2="20"
-                  stroke="#f43f5e"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-                <circle cx="100" cy="100" r="6" fill="#f43f5e" />
-              </g>
-            </svg>
-            <p className={`text-sm font-semibold ${severity.color}`}>
-              {severity.label}
+        <div className="bg-black p-6 rounded-xl border border-gray-900 h-80 shadow-lg">
+          <h4 className="font-light text-2xl text-gray-400">
+            User Retention (Last 7 Days)
+          </h4>
+
+          <div className="mt-10 flex flex-col gap-6">
+            <div className="flex items-end gap-4">
+              <p className="text-5xl font-bold text-[#0D9488]">
+                {retentionRate}%
+              </p>
+              <span className="text-sm text-gray-500 mb-1">
+                active users
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#0D9488] rounded-full transition-all duration-700"
+                style={{ width: `${retentionRate}%` }}
+              />
+            </div>
+
+            <p className="text-xs text-gray-500 uppercase tracking-wide">
+              {activeUser} of {totalUsers} users active this week
             </p>
-            <p className={`text-2xl font-bold ${severity.color}`}>{reportRate.toFixed(1)}%</p>
-            <p className="text-xs text-gray-600 uppercase tracking-tighter">Issues vs Total Users</p>
           </div>
         </div>
       </div>

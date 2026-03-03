@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Search, Check, X, ShieldAlert,
   Trash2, User, UserRoundX,
   TriangleAlert,
-  BanIcon
+  BanIcon,
+  History
 } from 'lucide-react';
 import axiosinstance from '../../Utilities/axiosIntance';
 import Modal from '../../Utilities/Modal';
 import Profile from '../../Componet/DashboardPg/Profile';
 import { toast, Toaster } from 'sonner';
+import ReportProfile from '../../Utilities/ReportProfile';
+import { UserContext } from '../../Componet/Context/UserContext';
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +20,8 @@ const AdminUsers = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userData, setUserData] = useState([]);
   const [reportedUsers, setReportedUsers] = useState([]);
-  const [eligibleUsers, setEligibleUsers] = useState([])
+  const [adminActions, setAdminActions] = useState([]);
+  const { user } = useContext(UserContext);
 
   const handleViewProfile = async (info) => {
     setIsOpen(true);
@@ -36,37 +40,47 @@ const AdminUsers = () => {
     }
   }
 
-  const handleSendWarning = async (reportId, userId) => {
+  const handleRegisterAction = async (reportId, action, reportedReason) => {
+    const response = await axiosinstance.post("/Admin/create-action", { reportedUser: reportId, action: action, reportedReason: reportedReason });
+    if (response) {
+      handleGetAdminActions();
+    }
+  }
+
+  const handleSendWarning = async (reportId, userId, reportedReason) => {
     const response = await axiosinstance.post("/Admin/warning-message", {
       reportId,
       userId
     });
     if (response.data) {
+      handleRegisterAction(userId, 'Warned User', reportedReason);
       setReportedUsers(prev => prev.filter(report => report._id !== reportId))
       toast.success("Warning message Sent Successfully");
     }
   };
 
-  const handleBlockUser = async (reportId, id) => {
+  const handleBlockUser = async (reportId, id, reportedReason) => {
     const response = await axiosinstance.post('/Admin/block-user', { reportId: reportId, userId: id });
     if (response.data.blockedUntil) {
+      handleRegisterAction(id, 'Blocked User', reportedReason);
       setReportedUsers(prev => prev.filter(report => report._id !== reportId))
       toast.info(`User Blocked Until ${response.data.blockedUntil}`);
     }
   }
 
-  const handleTerminateUser = async (reportId, id) => {
+  const handleTerminateUser = async (reportId, id, reportedReason) => {
     const response = await axiosinstance.post('/Admin/terminate-user', { userId: id })
     if (response) {
+      handleRegisterAction(id, 'Terminated User', reportedReason);
       setReportedUsers(prev => prev.filter(report => report._id !== reportId))
       toast.info('User terminated succesFully')
     }
   }
 
-  const handleGetEligibleUser = async () => {
-    const response = await axiosinstance.get('/Admin/eligible-user');
-    if (response) {
-      setEligibleUsers(response.data)
+  const handleGetAdminActions = async () => {
+    const response = await axiosinstance.get('/Admin/get-action');
+    if (response.data) {
+      setAdminActions(response.data)
     }
   }
 
@@ -96,7 +110,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     handleGetReportedUsers();
-    handleGetEligibleUser();
+    handleGetAdminActions();
   }, [])
 
   const visibleUsers = showAllResults
@@ -160,7 +174,7 @@ const AdminUsers = () => {
                   >
                     <div className="flex items-center gap-3">
                       <div className="h-8 w-8 rounded-full bg-teal-900/30 flex items-center justify-center text-teal-400">
-                        <User size={16} />
+                        <img src={result.profileImageUrl} alt="" className='w-8 h-8 rounded-full object-cover' />
                       </div>
                       <div>
                         <p className="text-sm font-medium group-hover/item:text-teal-400 transition-colors">
@@ -194,30 +208,58 @@ const AdminUsers = () => {
         )}
       </div>
 
-      {/* BADGE APPROVAL SECTION */}
       <section className='flex flex-col h-screen space-y-10'>
         <div className='flex flex-col w-full h-fit'>
-          <h3 className="text-xl font-semibold mb-4 text-teal-400">Badge Approvals</h3>
-          <div className="flex flex-col gap-4 bg-gray-500/20 rounded-xl overflow-y-scroll">
-            {eligibleUsers.map((u, index) => (
-              <div key={index} className="bg-slate-800/80 p-6 m-3 rounded-xl flex justify-between items-center border border-gray-900">
-                <div className='flex gap-5 items-center'>
-                  <img src={u.profileImageUrl} alt="" className='w-9 h-9 object-cover rounded-full' />
-                  <div className='flex flex-col'>
-                    <p className="font-medium text-white">{u.userName}</p>
-                    <p className="text-sm text-gray-400 italic">Eligible for {u.skill} {u.badge} </p>
+          <h3 className="text-xl font-semibold mb-4 text-red-400 flex gap-2 items-center"><History /> Recent Activity</h3>
+          <div className="flex flex-col border border-white/30 min-h-40 gap-4 bg-gray-500/20 rounded-xl overflow-y-scroll">
+            {adminActions.length > 0 ? (
+              adminActions.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex items-start gap-4 p-3 rounded-lg  m-5 bg-gray-800/40 hover:bg-gray-800/60 transition"
+                >
+                  <img
+                    src={item.reportedUser?.profileImageUrl || '/avatar.png'}
+                    alt="profile"
+                    className="w-12 h-12 rounded-full object-cover border border-gray-700"
+                  />
+
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold text-teal-400">
+                        {item.reportedUser?.userName}
+                      </p>
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-300">
+                      {item.reportedUser?.name}
+                    </p>
+
+                    <p className="text-xs text-gray-400">
+                      {item.reportedUser?.email}
+                    </p>
+
+                    <div className="flex gap-2 mt-2 text-xs">
+                      <span className="px-2 py-1 rounded bg-red-950 text-red-400">
+                        {item.action}
+                      </span>
+                      <span className="px-2 py-1 rounded bg-gray-700 text-gray-300">
+                        {item.reportedReason}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button className="p-2 hover:bg-teal-900/50 text-teal-500 rounded-lg transition"><Check size={20} /></button>
-                  <button className="p-2 hover:bg-red-900/30 text-gray-500 rounded-lg transition"><X size={20} /></button>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-center text-gray-500 text-sm">
+                No recent admin activity
+              </p>
+            )}
           </div>
         </div>
-        {console.log(eligibleUsers)}
-
         {/* REPORTED USERS TABLE */}
 
         <div className='flex flex-col w-full'>
@@ -246,7 +288,7 @@ const AdminUsers = () => {
                   return (
                     <tbody key={index} className="divide-y divide-gray-800">
                       <tr className="hover:bg-gray-800/40">
-
+                        {console.log(info)}
                         <td className="p-4 font-medium">
                           {info.reportedId.userName}
                         </td>
@@ -266,13 +308,13 @@ const AdminUsers = () => {
                         </td>
 
                         <td className="p-4 flex gap-3 items-center justify-center">
-                          <button onClick={() => handleSendWarning(info._id, info.reportedId._id)} className="bg-yellow-300 text-black p-2 rounded-lg cursor-pointer">
+                          <button onClick={() => handleSendWarning(info._id, info.reportedId._id, info.reports)} className="bg-yellow-300 text-black p-2 rounded-lg cursor-pointer">
                             <TriangleAlert size={15} />
                           </button>
-                          <button onClick={() => handleBlockUser(info._id, info.reportedId._id)} className="bg-yellow-500 text-black p-2 rounded-lg cursor-pointer">
+                          <button onClick={() => handleBlockUser(info._id, info.reportedId._id, info.reports)} className="bg-yellow-500 text-black p-2 rounded-lg cursor-pointer">
                             <BanIcon size={15} />
                           </button>
-                          <button onClick={() => handleTerminateUser(info._id, info.reportedId._id)} className="bg-red-500 text-white p-2 rounded-lg cursor-pointer">
+                          <button onClick={() => handleTerminateUser(info._id, info.reportedId._id, info.reports)} className="bg-red-500 text-white p-2 rounded-lg cursor-pointer">
                             <Trash2 size={15} />
                           </button>
                         </td>
@@ -303,7 +345,10 @@ const AdminUsers = () => {
           className={'absolute w-full h-full'}
           type='profile'
         >
-          <Profile userData={userData} />
+          {/* <Profile userData={userData} /> */}
+          <div className='m-10 px-20 w-full'>
+            <ReportProfile user={userData} />
+          </div>
         </Modal>
       }
     </div>

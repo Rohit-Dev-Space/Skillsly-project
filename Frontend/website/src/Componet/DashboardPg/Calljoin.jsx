@@ -13,7 +13,7 @@ import { Flag } from "lucide-react";
 const CallJoin = () => {
   const jitsiContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { roomId, sessionToken } = useParams();
+  const { groupName, roomId, sessionToken } = useParams();
   const [sessionData, setSessionData] = useState(null)
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(true);
   const [reportReason, setReportReason] = useState("")
@@ -39,7 +39,6 @@ const CallJoin = () => {
     verifySession();
   }, []);
 
-
   const handleIsreview = async () => {
     if (!sessionData) return;
 
@@ -50,10 +49,10 @@ const CallJoin = () => {
         groupId: sessionData.groupId,
         sessionToken: sessionData.sessionToken,
       });
-      navigate(`/dashboard/groups/get-one-group/${sessionData.groupId}`);
+      navigate(`/dashboard/groups/${groupName}/${sessionData.groupId}`);
 
     } else {
-      navigate(`/dashboard/groups/get-one-group/${sessionData.groupId}`);
+      navigate(`/dashboard/groups/${groupName}/${sessionData.groupId}`);
     }
 
   };
@@ -170,7 +169,7 @@ const CallJoin = () => {
   return (
     <div className="w-full h-screen bg-black flex flex-col">
       <Toaster position="top-center" />
-      {/* HEADER */}
+      {/* HEADER */}{console.log(sessionData)}
       <div className="h-14 flex items-center justify-between px-6 border-b border-[#1a1a1a]">
         <h1 className="text-white text-lg font-medium">
           Live Call Session

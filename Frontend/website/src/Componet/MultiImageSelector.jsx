@@ -1,7 +1,7 @@
 import { Trash, Upload, Image as ImageIcon } from "lucide-react";
 import React, { useRef, useState } from "react";
 
-const MultiImageSelector = ({ images, setImages, max = 5 }) => {
+const MultiImageSelector = ({ images, setImages, max }) => {
     const inputRef = useRef(null);
 
     const handleImageChange = (e) => {
@@ -33,9 +33,6 @@ const MultiImageSelector = ({ images, setImages, max = 5 }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-300">
-                Upload your work (max {max} images)
-            </p>
 
             <input
                 ref={inputRef}
@@ -48,7 +45,7 @@ const MultiImageSelector = ({ images, setImages, max = 5 }) => {
 
             <div className="flex gap-4 flex-wrap">
                 {/* Uploaded Images */}
-                {images.map((img, index) => (
+                {images?.map((img, index) => (
                     <div
                         key={index}
                         className="relative w-24 h-24 rounded-xl overflow-hidden border border-gray-500"
@@ -69,11 +66,11 @@ const MultiImageSelector = ({ images, setImages, max = 5 }) => {
                 ))}
 
                 {/* Add Button */}
-                {images.length < max && (
+                {images?.length < max && (
                     <button
                         type="button"
                         onClick={openFilePicker}
-                        className="w-24 h-24 flex flex-col gap-1 justify-center items-center border border-dashed border-gray-400 rounded-xl hover:border-green-400 text-gray-300"
+                        className="w-24 h-24 cursor-pointer flex flex-col gap-1 justify-center items-center border border-dashed border-gray-400 rounded-xl hover:border-green-400 text-gray-300"
                     >
                         <ImageIcon />
                         <span className="text-xs">Add</span>
