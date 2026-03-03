@@ -7,7 +7,7 @@ import GroupsList from "../src/Componet/DashboardPg/GroupsList";
 import NotesList from "../src/Componet/DashboardPg/NotesList";
 import GroupMessages from "../src/Componet/DashboardPg/GroupMessages";
 import Ranking from "../src/Componet/DashboardPg/Ranking";
-import CallJoin from "../src/Componet/DashboardPg/CallJoin";
+import CallJoin from "../src/Componet/DashboardPg/Calljoin";
 import UserMessages from "../src/Componet/DashboardPg/UserMessages"
 import MessageList from "../src/Componet/DashboardPg/MessageList"
 import ProtectedNavigation from "../src/Utilities/ProtectedNavigation";
