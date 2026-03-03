@@ -1,6 +1,7 @@
 const SkillCategories = require('../Models/SkillCategories');
 const Notification = require('../Models/Notifications');
 const User = require('../Models/Users');
+const UserRatings = require('../Models/UserRatings')
 
 const getSkillCategories = async (req, res) => {
     try {
@@ -40,30 +41,90 @@ const searchSkill = async (req, res) => {
 
 const getRanking = async (req, res) => {
     try {
-        let { category } = req.query;
+        const { categoryId } = req.query;
 
-        if (!category) {
-            return res.status(500).json({ message: "Category not recevied", error: err.message })
+        if (!categoryId) {
+            return res.status(400).json({ message: "categoryId is required" });
         }
 
-        const normalize = category
-            .replace(/-/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+        // 1️⃣ Find category
+        const category = await SkillCategories.findById(categoryId).select("title");
+        if (!category) {
+            return res.status(404).json({ message: "Category not found" });
+        }
 
-        const regex = new RegExp(
-            `^${normalize.split(' ').join('[\\s&]*')}$`,
-            'i'
+        const categoryTitle = category.title;
+
+        // 2️⃣ Find users who KNOW this skill
+        const users = await User.find({
+            skillsKnow: {
+                $regex: `^\\s*${categoryTitle}\\s*$`,
+                $options: "i"
+            }
+        }).select("-password -googleId -__v");
+
+        // 3️⃣ Build ranking data
+        const rankingData = await Promise.all(
+            users.map(async (user) => {
+                const userRating = await UserRatings.findOne({
+                    UserId: user._id,
+                    skill: {
+                        $regex: `^\\s*${categoryTitle}\\s*$`,
+                        $options: "i"
+                    }
+                }).select("rating");
+
+                const ratingsArray = userRating?.rating || [];
+                const totalReviews = ratingsArray.length;
+
+                const avgRating =
+                    totalReviews > 0
+                        ? Number(
+                            (
+                                ratingsArray.reduce((a, b) => a + b, 0) / totalReviews
+                            ).toFixed(2)
+                        )
+                        : 0;
+
+                return {
+                    user, // full user data (safe)
+                    ratingStats: {
+                        avgRating,
+                        totalReviews
+                    }
+                };
+            })
         );
 
-        const response = await User.find({
-            skillsKnow: { $elemMatch: { $regex: regex } }
-        }).sort({ rating: -1, reviewsCount: -1 });
+        // 4️⃣ Sort leaderboard
+        rankingData.sort(
+            (a, b) =>
+                b.ratingStats.avgRating - a.ratingStats.avgRating ||
+                b.ratingStats.totalReviews - a.ratingStats.totalReviews
+        );
 
-        return res.status(200).json(response);
+        return res.status(200).json({
+            category: categoryTitle,
+            rankingData
+        });
 
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+const skillList = async (req, res) => {
+    try {
+        const response = await SkillCategories.find().select("title")
+        if (Array.isArray(response)) {
+            return res.status(200).json(response);
+        }
     } catch (err) {
-        res.status(500).json({ message: "Server Error", error: err.message })
+        res.status(500).json({ message: "Server Error", error: err.message });
+
     }
 }
 
@@ -196,4 +257,4 @@ const markAllNotificationsRead = async (req, res) => {
 
 
 
-module.exports = { getSkillCategories, searchSkill, getRanking, getReccomendedSkills, SendNotification, getNotifications, deleteNotification, markAllNotificationsRead, sendRequestNotifictaion };
+module.exports = { getSkillCategories, searchSkill, getRanking, getReccomendedSkills, SendNotification, getNotifications, deleteNotification, markAllNotificationsRead, sendRequestNotifictaion, skillList };

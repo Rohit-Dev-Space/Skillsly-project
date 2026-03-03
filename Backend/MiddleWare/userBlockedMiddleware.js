@@ -6,22 +6,14 @@ const isBlockMiddleware = async (req, res, next) => {
     const user = await User.findById(req.user.id);
 
     if (user.isBlocked && user.blockedAt) {
-        const now = new Date();
-        const diff = now - user.blockedAt;
         const hours48 = 48 * 60 * 60 * 1000;
+        const unblockAt = new Date(user.blockedAt.getTime() + hours48);
 
-        if (diff >= hours48) {
-            user.isBlocked = false;
-            user.blockedAt = null;
-            user.blockReason = null;
-            await user.save();
-        }
-    }
-
-    if (user.isBlocked) {
         return res.status(403).json({
-            message: "Account temporarily blocked",
-            unblockAt: new Date(user.blockedAt.getTime() + 48 * 60 * 60 * 1000)
+            blocked: true,
+            blockedAt: user.blockedAt,
+            blockReason: user.blockReason,
+            unblockAt
         });
     }
 

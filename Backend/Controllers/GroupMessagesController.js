@@ -1,5 +1,7 @@
 const GroupMessages = require('../Models/GroupMessages');
+const Notification = require('../Models/Notifications');
 const UserRatings = require('../Models/UserRatings');
+const evaluateSkillBadge = require('../Services/evaluateSkillBadges')
 const crypto = require("crypto")
 
 const sendSessionRequest = async (req, res) => {
@@ -37,8 +39,8 @@ const getMessagesByGroup = async (req, res) => {
 
 const deleteSessionRequest = async (req, res) => {
     try {
-        const SessionRequests = req.params.SessionRequests;
-        const deletedGroupMessages = await GroupMessages.findByIdAndDelete(SessionRequests);
+        const { sessionRequestId } = req.params;
+        const deletedGroupMessages = await GroupMessages.findByIdAndDelete(sessionRequestId);
         if (!deletedGroupMessages) {
             return res.status(404).json({ message: "Session Request not found" });
         }
@@ -54,6 +56,7 @@ const createJoinSession = async (req, res) => {
         const sessionRequestId = req.params.sessionRequestId;
         const { groupId, senderId, date, time } = req.body;
         const sessionToken = crypto.randomBytes(24).toString("hex");
+        const roomId = `skill-session-${Date.now()}`
 
         if (!sessionRequestId) {
             return res.status(400).json({ message: "Session Request ID is required" });
@@ -61,7 +64,15 @@ const createJoinSession = async (req, res) => {
 
         const response = await GroupMessages.findById(sessionRequestId)
 
-        const checkIsSession = await GroupMessages.findOne({ type: "session_created", status: { $in: ["upcoming", "active"] } })
+        if (!response) {
+            return res.status(404).json({ message: "Session request no longer exists" });
+        }
+
+        const checkIsSession = await GroupMessages.findOne({
+            groupId: groupId,
+            type: "session_created",
+            status: { $in: ["upcoming", "active"] }
+        });
 
         if (checkIsSession) {
             return res.status(409).json({ message: 'Cannnot create a session if already one Exists' })
@@ -76,7 +87,8 @@ const createJoinSession = async (req, res) => {
                 type: "session_created",
                 isRead: false,
                 isReviewed: false,
-                sessionToken: sessionToken
+                sessionToken: sessionToken,
+                roomId: roomId,
             })
 
             const deleteRequest = await GroupMessages.findByIdAndDelete(sessionRequestId);
@@ -154,6 +166,23 @@ const sendReview = async (req, res) => {
 
         if (userRating) {
             const response = await GroupMessages.findOneAndUpdate({ reviewId: reviewId }, { isReviewed: true, rating: rating })
+            const badgeResult = await evaluateSkillBadge(mentorId, skillWantToLearn);
+
+            if (badgeResult.awarded) {
+                await Notification.create({
+                    userId: mentorId,
+                    type: "System",
+                    title: `🎉 Congratulations! You earned the ${badgeResult.badgeName} badge in ${badgeResult.skill}. Check your profile to view all badges.`
+                });
+            }
+            const badgeResult2 = await evaluateConditionBadge(req.user._id, "ALL_EARS");
+            if (badgeResult2.awarded) {
+                await Notification.create({
+                    userId: req.user._id,
+                    type: "System",
+                    title: `🎉 Congratulations! You earned the ${badgeResult.title} badge. Check your profile to view all badges.`
+                });
+            }
             return res.status(200).json({ message: "You have reviewed this mentor SuccesFully" });
         } else {
             return res.status(400).json({ message: "Failed to give review" });

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const UserRatings = new mongoose.Schema(
+const Schema = new mongoose.Schema(
     {
         UserId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -28,4 +28,6 @@ const UserRatings = new mongoose.Schema(
     { timestamps: true }
 );
 
-module.exports = mongoose.model("UserRatings", UserRatings);
+const UserRatings = mongoose.model("UserRatings", Schema)
+
+module.exports = UserRatings;

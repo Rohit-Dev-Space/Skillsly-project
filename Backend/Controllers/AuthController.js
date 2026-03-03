@@ -3,6 +3,9 @@ const User = require('../Models/Users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const UserRatings = require('../Models/UserRatings');
+const evaluateConditionBadge = require("../Services/evaluateConditionBadges");
+const Notification = require('../Models/Notifications');
+
 
 const assignJWT = (userId) => {
     return jwt.sign({ id: userId }, process.env.JWT_PASS, { expiresIn: '7d' });
@@ -62,6 +65,15 @@ const RegisterUserFinal = async (req, res) => {
                 userId: findUser,
                 skill: skill
             })
+        }
+
+        const badgeResult = await evaluateConditionBadge(findUser._id, "SKILLS_KNOWN");
+        if (badgeResult.awarded) {
+            await Notification.create({
+                userId: mentorId,
+                type: "System",
+                title: `🎉 Congratulations! You earned the ${badgeResult.title} badge. Check your profile to view all badges.`
+            });
         }
 
         if (!newUserInfo) {

@@ -3,7 +3,7 @@ const authMiddleware = require('../MiddleWare/AuthMiddleware');
 const adminMiddleware = require('../MiddleWare/adminMiddleware');
 const { getUserProfile } = require('../Controllers/AuthController');
 const { getSkillCategories } = require('../Controllers/SkillCategories');
-const { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, searchUser, getReportedUsers, reportedReasonCount, warnUser, BlockUser, terminateUser, requestedSkill, addSkillCategory, eligibleProgressiveBadgeUser, createBadge } = require('../Controllers/AdminController');
+const { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, searchUser, getReportedUsers, reportedReasonCount, warnUser, BlockUser, terminateUser, requestedSkill, addSkillCategory, eligibleProgressiveBadgeUser, createBadge, registerAdminAction, getAdminAction, getReportsInformation } = require('../Controllers/AdminController');
 
 const router = express.Router();
 
@@ -27,7 +27,9 @@ router.post('/block-user', authMiddleware, adminMiddleware, BlockUser);
 router.delete('/terminate-user', authMiddleware, adminMiddleware, terminateUser);
 router.get('/user-requests', authMiddleware, adminMiddleware, requestedSkill);
 router.post('/add-skill', authMiddleware, adminMiddleware, addSkillCategory);
-router.get('/eligible-user', authMiddleware, adminMiddleware, eligibleProgressiveBadgeUser);
 router.post('/create-badge', authMiddleware, adminMiddleware, createBadge);
+router.post('/create-action', authMiddleware, adminMiddleware, registerAdminAction);
+router.get('/get-action', authMiddleware, adminMiddleware, getAdminAction);
+router.post('/get-reportInfo', authMiddleware, adminMiddleware, getReportsInformation);
 
 module.exports = router;

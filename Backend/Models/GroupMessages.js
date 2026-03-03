@@ -25,6 +25,10 @@ const Schema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
+    roomId: {
+        type: String,
+        default: ''
+    },
     rating: {
         type: Number,
         default: 0
@@ -33,6 +37,10 @@ const Schema = new mongoose.Schema({
         type: String,
         unique: true,
         required: true
+    },
+    text: {
+        type: String,
+        default: '',
     },
     date: {
         type: Date,
@@ -47,7 +55,7 @@ const Schema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ["session_request", "session_created", "review"],
+        enum: ["session_request", "session_created", "review", "system"],
         required: true
     },
     status: {

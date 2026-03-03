@@ -1,4 +1,9 @@
+const GroupMessages = require('../Models/GroupMessages');
 const Groups = require('../Models/Groups');
+const crypto = require("crypto")
+const evaluateConditionBadge = require("../Services/evaluateConditionBadges");
+const Notification = require('../Models/Notifications');
+
 
 const createGroup = async (req, res) => {
     try {
@@ -27,12 +32,22 @@ const createGroup = async (req, res) => {
 
         const newGroup = await Groups.create({
             title: title,
+            groupMembers: [memberOne, memberTwo],
             memberOne: memberOne,
             memberTwo: memberTwo,
             memberOneSkill: memberOneSkill,
             memberTwoSkill: memberTwoSkill,
             createdBy: createdBy
         });
+
+        const result = await evaluateConditionBadge(createdBy, "GROUPS_CREATED");
+        if (result.awarded) {
+            await Notification.create({
+                userId: createdBy,
+                type: "System",
+                title: `🎉 Congratulations! You earned the ${result.title} badge. Check your profile to view all badges.`
+            });
+        }
 
         res.status(201).json({ message: "Group created successfully", group: newGroup });
     } catch (err) {
@@ -43,7 +58,7 @@ const createGroup = async (req, res) => {
 const getGroups = async (req, res) => {
     try {
         const userId = req.user._id;
-        const response = await Groups.find({ $or: [{ memberOne: userId }, { memberTwo: userId }] }).populate('createdBy', 'userName');
+        const response = await Groups.find({ groupMembers: userId }).populate('createdBy', 'userName');
         return res.status(200).json({ data: response });
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message })
@@ -75,11 +90,39 @@ const editTitle = async (req, res) => {
     }
 }
 
+const leaveGroup = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const removeMember = await Groups.findByIdAndUpdate(
+            id,
+            { $pull: { groupMembers: req.user._id } },
+            { new: true }
+        );
+
+        if (removeMember) {
+            const now = new Date();
+            const sessionToken = crypto.randomBytes(24).toString("hex");
+            const response = await GroupMessages.create({
+                sessionToken: sessionToken,
+                groupId: id,
+                type: 'system',
+                text: `${req.user.userName} Left the group on ${now}`
+            })
+            if (response) {
+                return res.status(200).json({ message: "Left group successfully" });
+            }
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Server Error", error: err.message });
+    }
+}
+
 const deleteGroup = async (req, res) => {
     try {
         const { id } = req.params;
         const group = await Groups.findById(id);
-        if (group.createdBy.toString() === req.user._id.toString()) {
+        if (group.groupMembers.length < 2) {
             await Groups.findByIdAndDelete(id);
             return res.status(200).json({ message: 'Group deleted successfully' });
         }
@@ -89,4 +132,4 @@ const deleteGroup = async (req, res) => {
     }
 }
 
-module.exports = { createGroup, getGroups, editTitle, deleteGroup, getOneGroup };
+module.exports = { createGroup, getGroups, editTitle, deleteGroup, getOneGroup, leaveGroup };

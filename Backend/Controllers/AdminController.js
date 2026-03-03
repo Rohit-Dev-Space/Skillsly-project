@@ -4,6 +4,10 @@ const UserRatings = require('../Models/UserRatings')
 const ReportedUser = require('../Models/ReportedUser')
 const Notification = require('../Models/Notifications');
 const SkillCategories = require('../Models/SkillCategories');
+const AdminActions = require('../Models/AdminActions');
+const ApprovedBadgeUser = require('../Models/ApprovedBadgeUser')
+const mongoose = require('mongoose');
+
 
 const getNumberOfUser = async (req, res) => {
     try {
@@ -57,8 +61,13 @@ const newlyRegisteredNumber = async (req, res) => {
 const newlyRegistered = async (req, res) => {
     try {
         const now = new Date();
-        const fiveWeeksAgo = new Date();
-        fiveWeeksAgo.setDate(now.getDate() - 35);
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(now.getDate() - now.getDay() + 1);
+
+        const fiveWeeksAgo = new Date(startOfWeek);
+        fiveWeeksAgo.setDate(startOfWeek.getDate() - 28);
 
         const data = await User.aggregate([
             {
@@ -68,8 +77,8 @@ const newlyRegistered = async (req, res) => {
             },
             {
                 $addFields: {
-                    weekIndex: {
-                        $ceil: {
+                    week: {
+                        $floor: {
                             $divide: [
                                 { $subtract: ["$createdAt", fiveWeeksAgo] },
                                 1000 * 60 * 60 * 24 * 7
@@ -80,21 +89,27 @@ const newlyRegistered = async (req, res) => {
             },
             {
                 $group: {
-                    _id: "$weekIndex",
+                    _id: "$week",
                     users: { $sum: 1 }
                 }
             },
             {
                 $project: {
-                    week: { $concat: ["W", { $toString: "$_id" }] },
+                    weekIndex: "$_id",
                     users: 1,
                     _id: 0
                 }
             },
-            { $sort: { week: 1 } }
+            { $sort: { weekIndex: 1 } }
         ]);
 
-        return res.status(200).json(data);
+
+        const result = Array.from({ length: 5 }, (_, i) => ({
+            week: `Week ${i + 1}`,
+            users: data.find(d => d.weekIndex === i)?.users || 0
+        }));
+
+        return res.status(200).json(result);
 
     } catch (err) {
         res.status(500).json({ message: "Server Error", error: err.message });
@@ -251,99 +266,6 @@ const searchUser = async (req, res) => {
     }
 }
 
-const eligibleProgressiveBadgeUser = async (req, res) => {
-    try {
-        const eligibleUsers = await UserRatings.aggregate([
-            {
-                $addFields: {
-                    validRatings: {
-                        $filter: {
-                            input: "$rating",
-                            as: "r",
-                            cond: { $gt: ["$$r", 0] }
-                        }
-                    }
-                }
-            },
-            {
-                $addFields: {
-                    avgRating: { $avg: "$validRatings" },
-                    reviewCount: { $size: "$validRatings" }
-                }
-            },
-            {
-                $addFields: {
-                    badge: {
-                        $switch: {
-                            branches: [
-                                {
-                                    case: {
-                                        $and: [
-                                            { $gte: ["$avgRating", 9] },
-                                            { $gte: ["$reviewCount", 15] }
-                                        ]
-                                    },
-                                    then: "Guru"
-                                },
-                                {
-                                    case: {
-                                        $and: [
-                                            { $gte: ["$avgRating", 8] },
-                                            { $gte: ["$reviewCount", 7] }
-                                        ]
-                                    },
-                                    then: "Efficiency II"
-                                },
-                                {
-                                    case: {
-                                        $and: [
-                                            { $gte: ["$avgRating", 7] },
-                                            { $gte: ["$reviewCount", 3] }
-                                        ]
-                                    },
-                                    then: "Efficiency III"
-                                }
-                            ],
-                            default: null
-                        }
-                    }
-                }
-            },
-            { $match: { badge: { $ne: null } } },
-            {
-                $lookup: {
-                    from: "users", // 🔴 VERIFY THIS NAME
-                    localField: "UserId",
-                    foreignField: "_id",
-                    as: "user"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$user",
-                    preserveNullAndEmptyArrays: false
-                }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    userId: "$user._id",
-                    userName: "$user.userName",
-                    profileImageUrl: "$user.profileImageUrl",
-                    skill: "$skill",
-                    avgRating: { $round: ["$avgRating", 2] },
-                    reviewCount: 1,
-                    badge: 1
-                }
-            }
-        ]);
-
-        res.status(200).json(eligibleUsers);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
 const warnUser = async (req, res) => {
     try {
         const { reportId, userId } = req.body;
@@ -432,7 +354,7 @@ const requestedSkill = async (req, res) => {
     try {
         const response = await Notification.find({
             type: 'User_request'
-        }).populate('userId', 'userName profileImgUrl');
+        }).populate('userId', 'userName profileImgUrl').sort({ createdAt: -1 });
 
         return res.status(200).json(response);
 
@@ -466,4 +388,80 @@ const addSkillCategory = async (req, res) => {
     }
 }
 
-module.exports = { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, eligibleProgressiveBadgeUser, searchUser, getReportedUsers, reportedReasonCount, warnUser, BlockUser, terminateUser, requestedSkill, addSkillCategory, createBadge }
+const registerAdminAction = async (req, res) => {
+    try {
+        const { reportedUser, action, reportedReason } = req.body;
+        const date_time = new Date();
+        const response = await AdminActions.create({
+            reportedUser: reportedUser,
+            action: action,
+            reportedReason: reportedReason,
+            date_time: date_time
+        })
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
+}
+
+const getAdminAction = async (req, res) => {
+    try {
+        const response = await AdminActions.find().populate('reportedUser', 'userName profileImageUrl email').sort({ createdAt: -1 });
+        return res.status(200).json(response)
+    } catch (err) {
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
+}
+
+const getReportsInformation = async (req, res) => {
+    try {
+        const { id } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ message: "User id is required" });
+        }
+
+        const reportStats = await ReportedUser.aggregate([
+            {
+                $match: {
+                    reportedId: new mongoose.Types.ObjectId(id)
+                }
+            },
+            {
+                $group: {
+                    _id: "$reports",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+
+        const totalReports = reportStats.reduce(
+            (sum, r) => sum + r.count,
+            0
+        );
+
+        const reportsByReason = reportStats.map(r => ({
+            reason: r._id,
+            count: r.count
+        }));
+
+        return res.status(200).json({
+            totalReports,
+            reportsByReason
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            message: "Server error",
+            error: err.message
+        });
+    }
+};
+
+module.exports = { getNumberOfUser, getActiveUsersCount, newlyRegisteredNumber, getReportedUsersNumber, getPopularSkills, newlyRegistered, searchUser, getReportedUsers, reportedReasonCount, warnUser, BlockUser, terminateUser, requestedSkill, addSkillCategory, createBadge, registerAdminAction, getAdminAction, getReportsInformation }

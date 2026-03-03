@@ -17,8 +17,8 @@ const BadgeSchema = new mongoose.Schema({
     condition: { type: String, default: '' },
     count: { type: Number, default: 0 },
     iconUrl: { type: String, default: '' },
-    approvedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 const Badges = mongoose.model('Badges', BadgeSchema);
 module.exports = Badges;
+
