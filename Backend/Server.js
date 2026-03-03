@@ -20,7 +20,7 @@ const EditRoutes = require('./Routes/EditRoutes')
 
 app.use(
     cors({
-        origin: '*',
+        origin: ["https://skillsly.vercel.app", "http://localhost:5173"],
         methods: ['GET', 'PUT', 'DELETE', 'POST', 'PATCH'],
         allowedHeaders: ["Content-Type", "Authorization"]
     })
@@ -35,7 +35,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: [
+            "http://localhost:5173",
+            "https://skillsly.vercel.app"
+        ],
         methods: ["GET", "POST"]
     }
 });
