@@ -28,7 +28,6 @@ axiosinstance.interceptors.response.use(
             };
             localStorage.setItem("blockedUser", JSON.stringify(blockedUserData));
 
-            // Optional: remove token so all requests fail immediately
             localStorage.removeItem("token");
         }
         return Promise.reject(error);

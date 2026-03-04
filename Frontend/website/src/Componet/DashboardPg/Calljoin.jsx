@@ -168,7 +168,7 @@ const CallJoin = () => {
 
   return (
     <div className="w-full h-screen bg-black flex flex-col">
-      <Toaster position="top-center" />
+      <Toaster position="top-center" richColors />
       {/* HEADER */}{console.log(sessionData)}
       <div className="h-14 flex items-center justify-between px-6 border-b border-[#1a1a1a]">
         <h1 className="text-white text-lg font-medium">

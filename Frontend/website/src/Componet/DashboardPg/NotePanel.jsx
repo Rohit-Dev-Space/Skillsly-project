@@ -22,6 +22,7 @@ export default function NotesPanel({ func, isSideMenuOpen }) {
         if (response.data) {
             setNoteTitle('');
             setNoteContent('');
+            toast.success("Note created and stored in Saved Notes section");
         }
     }
 

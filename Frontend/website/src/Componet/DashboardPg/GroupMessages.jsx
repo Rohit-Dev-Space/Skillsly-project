@@ -223,7 +223,6 @@ const GroupMessages = () => {
     );
     if (response.data) {
       handleGetAllMessages();
-      console.log(msg.reviewedId, msg.skillWantToLearn);
       setTimeout(() => {
         toast.success("Review Sent Successfully");
       }, 500);
@@ -383,7 +382,7 @@ const GroupMessages = () => {
                           {value >= 6 && value <= 7.5 && "Very helpful"}
                           {value > 7.5 && "Outstanding!"}
                         </p>
-
+                        {console.log(msg)}
                         <button
                           onClick={() => handleSendReview(msg)}
                           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500"
