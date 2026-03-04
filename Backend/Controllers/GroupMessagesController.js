@@ -2,6 +2,7 @@ const GroupMessages = require('../Models/GroupMessages');
 const Notification = require('../Models/Notifications');
 const UserRatings = require('../Models/UserRatings');
 const evaluateSkillBadge = require('../Services/evaluateSkillBadges')
+const evaluateConditionBadges = require('../Services/evaluateConditionBadges')
 const crypto = require("crypto")
 
 const sendSessionRequest = async (req, res) => {
@@ -155,42 +156,64 @@ const checkIsReviewed = async (req, res) => {
 
 const sendReview = async (req, res) => {
     try {
+        console.log("➡️ sendReview HIT");
+        console.log("BODY:", req.body);
+        console.log("USER:", req.user?._id);
         const { mentorId, rating, skillWantToLearn, reviewId } = req.body;
+        const id = req.user._id;
 
-        const userRating = await UserRatings.findOneAndUpdate({ UserId: mentorId, skill: skillWantToLearn },
+        if (!mentorId || !rating || !skillWantToLearn || !reviewId) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const userRating = await UserRatings.findOneAndUpdate(
+            { UserId: mentorId, skill: skillWantToLearn },
             {
                 $push: { rating: rating },
                 $inc: { totalReviews: 1 }
             },
-            { new: true, upsert: true });
+            { new: true, upsert: true }
+        );
 
-        if (userRating) {
-            const response = await GroupMessages.findOneAndUpdate({ reviewId: reviewId }, { isReviewed: true, rating: rating })
-            const badgeResult = await evaluateSkillBadge(mentorId, skillWantToLearn);
+        await GroupMessages.findByIdAndUpdate(
+            reviewId,
+            { isReviewed: true, rating },
+            { new: true }
+        );
 
-            if (badgeResult.awarded) {
-                await Notification.create({
-                    userId: mentorId,
-                    type: "System",
-                    title: `🎉 Congratulations! You earned the ${badgeResult.badgeName} badge in ${badgeResult.skill}. Check your profile to view all badges.`
-                });
-            }
-            const badgeResult2 = await evaluateConditionBadge(req.user._id, "ALL_EARS");
-            if (badgeResult2.awarded) {
-                await Notification.create({
-                    userId: req.user._id,
-                    type: "System",
-                    title: `🎉 Congratulations! You earned the ${badgeResult.title} badge. Check your profile to view all badges.`
-                });
-            }
-            return res.status(200).json({ message: "You have reviewed this mentor SuccesFully" });
-        } else {
-            return res.status(400).json({ message: "Failed to give review" });
+        const badgeResult = await evaluateSkillBadge(mentorId, skillWantToLearn);
+
+        if (badgeResult && badgeResult.awarded) {
+            await Notification.create({
+                userId: mentorId,
+                type: "System",
+                title: `🎉 Congratulations! You earned the ${badgeResult.badgeName} badge in ${badgeResult.skill}.`
+            });
         }
+        console.log("BADGE RESULT:", badgeResult);
+
+        console.log("✅ Evaluating condition badge");
+        const badgeResult2 = await evaluateConditionBadges(id);
+
+        if (badgeResult2 && badgeResult2.awarded) {
+            await Notification.create({
+                userId: id,
+                type: "System",
+                title: `🎉 Congratulations! You earned the ${badgeResult2.badgeName} badge.`
+            });
+        }
+        console.log("CONDITION BADGE RESULT:", badgeResult2);
+        return res.status(200).json({ message: "Review submitted successfully" });
+
     } catch (err) {
-        res.status(500).json({ message: "Server Error", error: err.message })
+        console.error("🔥 SEND REVIEW ERROR 🔥");
+        console.error(err);
+        return res.status(500).json({
+            message: err.message,
+            stack: err.stack
+        });
     }
-}
+};
 
 const verifySession = async (req, res) => {
     const { sessionToken } = req.params;
