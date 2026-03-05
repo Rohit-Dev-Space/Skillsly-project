@@ -3,7 +3,7 @@ const Badges = require("../Models/Badges.js");
 const User = require("../Models/Users.js");
 const Group = require("../Models/Groups.js");
 const GroupMessages = require("../Models/GroupMessages.js");
-const Message = require("../Models/GroupMessages.js");
+const Message = require("../Models/Message.js");
 
 async function evaluateConditionBadges(userId) {
     try {
@@ -21,12 +21,13 @@ async function evaluateConditionBadges(userId) {
 
             switch (badge.condition) {
                 case "SOCIAL_BUTTERFLY": {
-                    const uniqueUsersMessaged = await Message.distinct(
-                        "receiverId",
-                        { senderId: userId }
-                    );
 
-                    achieved = uniqueUsersMessaged.length >= 10;
+                    const conversations = await Message.distinct("conversationId", {
+                        senderId: userId
+                    });
+
+                    achieved = conversations.length >= 10;
+
                     break;
                 }
 

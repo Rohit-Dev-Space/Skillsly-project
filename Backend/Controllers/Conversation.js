@@ -115,7 +115,7 @@ const sendMessage = async (req, res) => {
             await Notification.create({
                 userId: senderId,
                 type: "System",
-                title: `🎉 Congratulations! You earned the ${result.title} badge. Check your profile to view all badges.`
+                title: `🎉 Congratulations! You earned the ${result.badgeName} badge. Check your profile to view all badges.`
             });
         }
 
