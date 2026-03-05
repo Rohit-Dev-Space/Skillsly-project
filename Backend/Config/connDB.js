@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
+const unblockUsersCron = require('../cron/unBlockUser')
 
 const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI, {});
         console.log('Database connected successfully');
+        unblockUsersCron();
     } catch (err) {
         console.error('Database connection error:', err);
         process.exit(1);
