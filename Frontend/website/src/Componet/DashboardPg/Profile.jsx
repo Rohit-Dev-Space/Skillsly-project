@@ -197,6 +197,7 @@ export default function Profile({ userData = '' }) {
                             <div className="-mt-10  w-1/2">
                                 <div className="mt-10">
                                     <h2 className="text-xl font-light text-white mb-4 flex gap-1"><Award className='w-10 h-8' /> Badges</h2>
+                                    {console.log(Badges)}
                                     {Badges.length > 0 ? (
                                         <div className="flex flex-wrap gap-4">
                                             {Badges.map((info, index) => {
