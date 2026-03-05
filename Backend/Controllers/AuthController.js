@@ -72,7 +72,7 @@ const RegisterUserFinal = async (req, res) => {
             await Notification.create({
                 userId: mentorId,
                 type: "System",
-                title: `🎉 Congratulations! You earned the ${badgeResult.title} badge. Check your profile to view all badges.`
+                title: `🎉 Congratulations! You earned the ${badgeResult.badgeName} badge. Check your profile to view all badges.`
             });
         }
 

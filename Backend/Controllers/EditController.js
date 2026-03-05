@@ -13,7 +13,7 @@ const editDescription = async (req, res) => {
         await Notification.create({
             userId: id,
             type: "System",
-            title: `🎉 Congratulations! You earned the ${result.title} badge. Check your profile to view all badges.`
+            title: `🎉 Congratulations! You earned the ${result.badgeName} badge. Check your profile to view all badges.`
         });
     }
     if (response) {
@@ -33,7 +33,7 @@ const editLink = async (req, res) => {
             await Notification.create({
                 userId: id,
                 type: "System",
-                title: `🎉 Congratulations! You earned the ${result.title} badge. Check your profile to view all badges.`
+                title: `🎉 Congratulations! You earned the ${result.badgeName} badge. Check your profile to view all badges.`
             });
         }
         if (response) {
@@ -61,7 +61,7 @@ const editIterables = async (req, res) => {
             await Notification.create({
                 userId: id,
                 type: "System",
-                title: `🎉 Congratulations! You earned the ${result.title} badge. Check your profile to view all badges.`
+                title: `🎉 Congratulations! You earned the ${result.badgeName} badge. Check your profile to view all badges.`
             });
         }
 
@@ -70,7 +70,7 @@ const editIterables = async (req, res) => {
             await Notification.create({
                 userId: id,
                 type: "System",
-                title: `🎉 Congratulations! You earned the ${badgeResult.title} badge. Check your profile to view all badges.`
+                title: `🎉 Congratulations! You earned the ${badgeResult.badgeName} badge. Check your profile to view all badges.`
             });
         }
         if (response) {
