@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { Search, MoreVertical, Paperclip, Send, Smile, ArrowLeft, Users, X, UserRoundX, User, MessageCircleMore } from 'lucide-react';
+import { Search, MoreVertical, Paperclip, Send, Smile, ArrowLeft, Users, X, UserRoundX, User, MessageCircleMore, MessageCircleDashed, Mail } from 'lucide-react';
 import axiosinstance from '../../Utilities/axiosIntance';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../Context/UserContext';
@@ -186,9 +186,10 @@ export default function MessageList() {
               <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700 text-teal-400"><Users /></div>
               <div className="flex-grow flex justify-between">
                 <div>
-                  {info.participants.length === 1 ? <h3 className='font-semibold'>You</h3> : <h3 className="font-semibold">{info.participants[0]._id === user?._id ? info.participants[1].userName : info.participants[0].userName}</h3>}                  <p className="text-sm text-gray-400 truncate">{info.lastMessage.text}</p>
+                  {info.participants.length === 1 ? <h3 className='font-semibold'>You</h3> : <h3 className="font-semibold">{info.participants[0]._id === user?._id ? info.participants[1].userName : info.participants[0].userName}</h3>}
+                  <p className="text-sm text-gray-400 truncate">{info.lastMessage?.text}</p>
                 </div>
-                {!info.lastMessage.readBy.includes(user?._id) && <p className='p-2 text-black bg-teal-400 font-semibold rounded-full'>New Message</p>}
+                {!info.lastMessage?.readBy.includes(user?._id) && <p className='p-2 text-black bg-teal-400 font-semibold rounded-full'><Mail /></p>}
               </div>
             </div>
           ))

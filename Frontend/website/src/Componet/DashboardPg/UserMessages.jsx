@@ -7,6 +7,7 @@ import Modal from "../../Utilities/Modal";
 import { UserContext } from "../Context/UserContext";
 import { toast, Toaster } from "sonner";
 import socket from "../../Utilities/Socket";
+import moment from "moment";
 
 export default function UserMessages() {
 
@@ -185,7 +186,7 @@ export default function UserMessages() {
                             {msg.isMe && <p className="absolute bottom-1 right-2">{msg.readBy.includes(userId) ? <CheckCheck size={15} className="text-blue-400 font-bold" /> : <Check size={15} className="text-white" />}</p>}
                         </div>
                         <span className="text-[10px] text-gray-600 mt-1">
-                            {msg.time}
+                            {moment(msg.createdAt).format('h:mm A')}
                         </span>
                     </div>
                 ))}

@@ -133,11 +133,7 @@ const sendMessage = async (req, res) => {
             conversationId: conversation._id,
             receiverId,
             isMe: true,
-            time: new Date(populated.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit"
-            }),
-            createdAt: populated.createdAt,
+            time: Date.now(),
             readBy: populated.readBy
         });
     } catch (err) {
