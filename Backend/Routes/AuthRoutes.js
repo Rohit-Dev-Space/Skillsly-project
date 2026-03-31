@@ -2,14 +2,12 @@ const express = require('express');
 const { RegisterUserFinal, RegisterUserInitial, LoginUser, getUserProfile } = require('../Controllers/AuthController');
 const authMiddleWare = require('../MiddleWare/AuthMiddleware');
 const { googleLoginOnly } = require('../Controllers/googleAuthController');
-const isBlockMiddleware = require('../MiddleWare/userBlockedMiddleware');
 const router = express.Router();
 
 router.post('/register-initial', RegisterUserInitial);
-router.put('/register-final', isBlockMiddleware, RegisterUserFinal);
-router.post('/login', isBlockMiddleware, LoginUser);
-router.get('/profile', authMiddleWare, isBlockMiddleware, getUserProfile);
-router.post("/google-login", isBlockMiddleware, googleLoginOnly);
-
+router.put('/register-final', RegisterUserFinal); // Clean route
+router.post('/login', LoginUser);
+router.get('/profile', authMiddleWare, getUserProfile);
+router.post("/google-login", googleLoginOnly);
 
 module.exports = router;
