@@ -59,13 +59,13 @@ export default function Feature() {
                         <div className='flex flex-col items-center justify-center'>
                             <div>
                                 <CountUp
-                                    from={100}
-                                    to={0}
+                                    from={0}
+                                    to={20}
                                     separator=","
                                     direction="up"
                                     duration={1}
                                     className="count-up-text"
-                                />
+                                />+
                             </div>
                             <h2 className='text-slate-400 text-lg pt-2'>Registered <br />Users</h2>
                         </div>

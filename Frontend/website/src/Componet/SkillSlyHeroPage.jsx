@@ -23,6 +23,7 @@ const SkillSlyHeroPage = () => {
 
       <header className="flex justify-between items-center py-4 px-6 md:px-12 relative z-50">
         <div className="flex items-center space-x-2">
+          <img src="/skillsly.png" alt="" className='h-10 w-8' />
           <span className="text-2xl font-bold">SkillSly</span>
         </div>
 
@@ -35,7 +36,6 @@ const SkillSlyHeroPage = () => {
           <a href="#footer" className="hover:text-green-400 transition-colors">Contact us</a>
         </nav>
 
-        {/* Sign In Button */}
         {user ? (
           <div className='flex items-center gap-3'>
             <img src={user.profileImageUrl} alt="profile image" className='w-12 h-12 rounded-full object-cover border-2 border-white' />
@@ -51,10 +51,8 @@ const SkillSlyHeroPage = () => {
         )}
       </header>
 
-      {/* -------------------- HERO SECTION CONTENT -------------------- */}
       <main className="relative flex flex-col lg:flex-row items-center justify-between px-6 md:px-12 min-h-[calc(100vh-80px)]"> {/* Adjusted min-height for content */}
 
-        {/* Left Side: Text and Buttons */}
         <div className="max-w-xl lg:w-1/2 mb-12 lg:mb-0 relative z-20">
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
             Peer-to-Peer <br />
@@ -83,22 +81,18 @@ const SkillSlyHeroPage = () => {
           </div>
         </div>
 
-        {/* Right Side: Illustration Images and Background Shapes */}
         <div className="relative lg:w-1/2 flex justify-center lg:justify-end min-h-[400px] lg:min-h-[600px] mt-10 lg:mt-0">
 
-          {/* Background Blob Shapes */}
-          {/* Green Blob */}
           <img
             src={IMAGES.greenBlob}
             alt="Decorative green background blob"
             className="absolute top-0 right-0 w-full lg:w-[600px] h-auto object-cover z-0"
             style={{
-              transform: 'translateX(10%) translateY(-20%)', // Adjust position
-              maxWidth: '800px', // Prevent it from getting too large
+              transform: 'translateX(10%) translateY(-20%)',
+              maxWidth: '800px',
             }}
           />
 
-          {/* Blue Blob */}
           <img
             src='/BlueBlob.png'
             alt="Decorative blue background blob"

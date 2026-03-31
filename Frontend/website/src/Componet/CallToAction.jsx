@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserContext } from './Context/UserContext';
+
 
 const CallToAction = () => {
+    const navigate = useNavigate();
+    const { user } = useContext(UserContext);
+
 
     const ROCKET_URL = "/rocket.png";
     const CLOUD_URL = "/cloud1.png";
@@ -92,12 +98,20 @@ const CallToAction = () => {
                             Connect with learners like you, collaborate to share skills, and cultivate new knowledge every session. With SkillSly, growth isn't a solo journey — it's a community effort. Join today and start building skills together.
                         </p>
                         <div className='w-full flex -ml-5 gap-10'>
-                            <button className="w-1/4 px-8 py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg">
-                                Register
-                            </button>
-                            <button className="w-1/4 px-8 py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg">
-                                SIGN IN
-                            </button>
+                            {user ? (
+                                <button onClick={() => navigate('/dashboard')} className="w-2/5 pointer-cursor px-8 py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg">
+                                    Go to Dashboard
+                                </button>
+                            ) : (
+                                <>
+                                    <button onClick={() => navigate('/Authenticate')} className="w-1/4 px-8 pointer-cursor py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg">
+                                        Register
+                                    </button>
+                                    <button onClick={() => navigate('/Authenticate')} className="w-1/4 px-8 pointer-cursor py-3 bg-green-500 hover:bg-[#B8FB70] text-white hover:text-black font-bold rounded-lg transition-colors shadow-lg">
+                                        Sign In
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
 

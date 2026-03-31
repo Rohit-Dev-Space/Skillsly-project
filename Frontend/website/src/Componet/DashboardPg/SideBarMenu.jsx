@@ -32,8 +32,9 @@ const Sidebar = ({ isOpen }) => {
 
   return (
     <div className="flex flex-col w-full h-full bg-[#0d0d0d] text-white">
-      <div className="flex items-center space-x-2 p-4 text-xl font-bold text-white">
-        <span>skillSly</span>
+      <div className="flex items-center space-x-2 p-4 text-2xl font-bold text-white">
+        <img src="/skillsly.png" alt="" className='h-10 w-8' />
+        <span>SkillSly</span>
       </div>
 
       <div className="flex flex-col items-center py-8 border-b border-gray-800">

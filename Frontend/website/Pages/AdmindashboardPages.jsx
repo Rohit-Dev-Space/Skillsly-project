@@ -23,8 +23,10 @@ const AdmindashboardPages = () => {
   return (
     <div className="flex h-screen bg-[#050505] text-white overflow-hidden font-sans">
       <aside className="w-64 border-r border-gray-900 flex flex-col p-6 bg-black">
-        <div className="mb-10 text-xl font-bold tracking-tighter">
-          skillSly <span className="text-[10px] text-[#0D9488] border border-[#0D9488] px-1 rounded ml-1">ADMIN</span>
+        <div className="mb-10 text-2xl font-bold tracking-tighter flex gap-2 items-end text-white">
+          <img src="/skillsly.png" alt="" className='h-10 w-8' />
+          Skillsly
+          <span className="text-[10px] text-[#0D9488] border border-[#0D9488] px-1 rounded ml-1">ADMIN</span>
         </div>
 
         <div className="flex flex-col items-center mb-8">
