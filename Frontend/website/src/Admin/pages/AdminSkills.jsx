@@ -168,12 +168,11 @@ const AdminSkills = () => {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-teal-400">User Requested Skills</h3>
           <div className="space-y-2 bg-black border border-gray-800 p-4 rounded-xl h-full overflow-y-auto">
+            {console.log(userRequests)}
             {userRequests.map((skill, i) => (
-              <div key={i} className="bg-gray-700/20 p-4 m-4 rounded-lg border border-gray-800 flex justify-between items-center">
+              <div key={i} className="bg-gray-700/20 p-4 m-4 rounded-lg border border-gray-800 flex justify-center gap-3 items-center">
+                <span className='font-extrabold'>{skill.userId.userName}</span>
                 <span><i>{skill.title}</i></span>
-                <button className='hover:bg-red-400/20 rounded-full p-3 cursor-pointer'>
-                  <Trash2 size={18} className='text-red-400' />
-                </button>
               </div>
             ))}
           </div>

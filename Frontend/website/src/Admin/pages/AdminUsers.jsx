@@ -211,7 +211,7 @@ const AdminUsers = () => {
       <section className='flex flex-col h-screen space-y-10'>
         <div className='flex flex-col w-full h-fit'>
           <h3 className="text-xl font-semibold mb-4 text-red-400 flex gap-2 items-center"><History /> Recent Activity</h3>
-          <div className="flex flex-col border border-white/30 min-h-40 gap-4 bg-gray-500/20 rounded-xl overflow-y-scroll">
+          <div className="flex flex-col border border-white/30 max-h-80 gap-4 bg-gray-500/20 rounded-xl overflow-y-scroll">
             {adminActions.length > 0 ? (
               adminActions.map((item) => (
                 <div

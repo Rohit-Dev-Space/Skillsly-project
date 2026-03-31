@@ -94,18 +94,27 @@ const GroupMessages = () => {
   };
 
   const handleCreateJoinSession = async (item) => {
-    const response = await axiosinstance.post(
-      `/session-requests/create-join-session/${item._id}`,
-      {
-        groupId,
-        senderId: item.senderId._id,
-        date: item.date,
-        time: item.time,
+    try {
+      const response = await axiosinstance.post(
+        `/session-requests/create-join-session/${item._id}`,
+        {
+          groupId,
+          senderId: item.senderId._id,
+          date: item.date,
+          time: item.time,
+        }
+      );
+
+      if (response.data) {
+        getJoinSessions();
+        handleGetAllMessages();
       }
-    );
-    if (response.data) {
-      getJoinSessions();
-      handleGetAllMessages();
+    } catch (err) {
+      if (err.response?.status === 409) {
+        toast.error("⚠️ A session is already active or upcoming");
+      } else {
+        toast.error("Something went wrong");
+      }
     }
   };
 

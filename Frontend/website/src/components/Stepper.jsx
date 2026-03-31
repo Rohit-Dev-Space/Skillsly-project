@@ -126,7 +126,6 @@ export default function Stepper({
           </div>
         )}
       </div>
-      {isLoader && <Loader />}
     </div>
   );
 }
