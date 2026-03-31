@@ -354,7 +354,7 @@ const requestedSkill = async (req, res) => {
     try {
         const response = await Notification.find({
             type: 'User_request'
-        }).populate('userId', 'userName profileImgUrl').sort({ createdAt: -1 });
+        }).populate('userId', 'userName').sort({ createdAt: -1 });
 
         return res.status(200).json(response);
 

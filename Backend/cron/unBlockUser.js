@@ -3,7 +3,7 @@ const User = require('../Models/Users');
 
 // Run every hour
 module.exports = () => {
-    cron.schedule('0 * * * *', async () => {
+    cron.schedule('* * * * * ', async () => {
         try {
             const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
 
