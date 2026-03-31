@@ -3,9 +3,9 @@ node_modules/
 **/node_modules/
 
 # Env files (IMPORTANT)
-# .env
-# Frontend/.env
-# Backend/.env
+.env
+Frontend/.env
+Backend/.env
 
 # Builds
 dist/
